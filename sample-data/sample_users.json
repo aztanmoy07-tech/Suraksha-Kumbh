@@ -1,0 +1,23 @@
+[
+  {
+    "user_id": "DEMO-PILGRIM-001",
+    "display_name": "Sample Pilgrim",
+    "role": "pilgrim",
+    "phone": "+910000000001",
+    "is_demo": true
+  },
+  {
+    "user_id": "DEMO-SEVADAR-001",
+    "display_name": "Sample Sevadar",
+    "role": "sevadar",
+    "phone": "+910000000002",
+    "is_demo": true
+  },
+  {
+    "user_id": "DEMO-OPERATOR-001",
+    "display_name": "Sample Operator",
+    "role": "operator",
+    "phone": "+910000000003",
+    "is_demo": true
+  }
+]

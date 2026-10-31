@@ -1,0 +1,9 @@
+# Copy these rules into the repository's .gitignore if not already present.
+.env
+.env.*
+!.env.example
+key.pem
+*.pem
+node_modules/
+npm-debug.log*
+.DS_Store

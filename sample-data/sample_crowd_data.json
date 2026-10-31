@@ -1,0 +1,20 @@
+[
+  {
+    "zone_id": "DEMO-ZONE-A",
+    "zone_name": "Sample Zone A",
+    "estimated_people": 1200,
+    "capacity_reference": 3000,
+    "density_level": "moderate",
+    "observed_at": "2026-01-01T09:30:00Z",
+    "is_demo": true
+  },
+  {
+    "zone_id": "DEMO-ZONE-B",
+    "zone_name": "Sample Zone B",
+    "estimated_people": 2600,
+    "capacity_reference": 3000,
+    "density_level": "high",
+    "observed_at": "2026-01-01T10:15:00Z",
+    "is_demo": true
+  }
+]
