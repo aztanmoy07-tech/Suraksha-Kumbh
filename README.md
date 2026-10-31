@@ -1,11 +1,11 @@
 🔱 Suraksha Kumbh (सुरक्षा कुंभ) 2026
 Maha Kumbh Central Command & Tactical Disaster Mitigation Platform
-Lead Developer & Architect: Abu Junayed Tanmoy(Team Elite Nova)
+Lead Developer & Architect: aztanmoy07-tech(Team Elite Nova)
 Live Deployments:
 
-🌐 Central Command & Radar: https://ojshwiraj.github.io/SURAKSHA-KUMBH/
-🔱 3D Prayagraj Digital Twin: https://ojshwiraj.github.io/SURAKSHA-KUMBH/prayagraj_twin.html
-📱 Pilgrim & Sevadar App: https://ojshwiraj.github.io/SURAKSHA-KUMBH/User_Interface.html
+🌐 Central Command & Radar: https://aztanmoy07-tech.github.io/Suraksha-Kumbh    
+🔱 3D Prayagraj Digital Twin:https://aztanmoy07-tech.github.io/Suraksha-Kumbh/prayagraj_twin.html
+📱 Pilgrim & Sevadar App: https://aztanmoy07-tech.github.io/Suraksha-Kumbh/User_Interface.html
 🛡️ Key Capabilities
 1. 🔱 Prayagraj Sangam 3D Digital Twin
 Three.js WebGL Engine: 3D spatial twin of Triveni Sangam, Akbar Fort, Saraswati Ghat, Arail Ghat, and floating Pontoon Bridges 1-5.
@@ -29,8 +29,8 @@ Odd/Even pilgrim ID alternating evacuation corridors to eliminate bottlenecks.
 🔒 Intellectual Property & Anti-Plagiarism Shield
 This project is protected under the Suraksha Kumbh Source-Available & Anti-Plagiarism License (2026).
 
-**Original Author : Abu junayed Tanmoy
-Integrity Token: SURAKSHA-KUMBH-SECURE-NODE-2026-AUTH-OJSHWIRAJ.
+**Original Author : aztanmoy07-tech(Team Elite Nova)
+Integrity Token: Suraksha-Kumbh-SECURE-NODE-2026-AUTH-AZTANMOY07-TECH.
 Unauthorized replication, public re-branding, commercialization, or uncredited cloning is strictly prohibited. Hackathon judges and academic reviewers are granted full access for official evaluation.
 🛠️ Local Development
 # 1. Clone repository
