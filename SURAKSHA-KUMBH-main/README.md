@@ -1,6 +1,6 @@
 # 🔱 Suraksha Kumbh (सुरक्षा कुंभ) 2026
 ### Maha Kumbh Central Command & Tactical Disaster Mitigation Platform
-**Lead Developer & Architect**: OjshwiRaj (Team Saral)  
+**Lead Developer & Architect**: Abu Junayed Tanmoy(Team Elite Nova)  
 **Live Deployments**:
 * 🌐 **Central Command & Radar**: [https://ojshwiraj.github.io/SURAKSHA-KUMBH/](https://ojshwiraj.github.io/SURAKSHA-KUMBH/)
 * 🔱 **3D Prayagraj Digital Twin**: [https://ojshwiraj.github.io/SURAKSHA-KUMBH/prayagraj_twin.html](https://ojshwiraj.github.io/SURAKSHA-KUMBH/prayagraj_twin.html)
@@ -37,7 +37,7 @@
 
 ## 🔒 Intellectual Property & Anti-Plagiarism Shield
 This project is protected under the **Suraksha Kumbh Source-Available & Anti-Plagiarism License (2026)**.
-* **Original Author**: OjshwiRaj (Team Saral).
+* **Original Author : Abu junayed Tanmoy
 * **Integrity Token**: `SURAKSHA-KUMBH-SECURE-NODE-2026-AUTH-OJSHWIRAJ`.
 * Unauthorized replication, public re-branding, commercialization, or uncredited cloning is strictly prohibited. Hackathon judges and academic reviewers are granted full access for official evaluation.
 
@@ -47,7 +47,7 @@ This project is protected under the **Suraksha Kumbh Source-Available & Anti-Pla
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/OjshwiRaj/SURAKSHA-KUMBH.git
+https://github.com/aztanmoy07-tech/Suraksha-Kumbh.git
 cd SURAKSHA-KUMBH
 
 # 2. Install dependencies
