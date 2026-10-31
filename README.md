@@ -35,7 +35,7 @@ Unauthorized replication, public re-branding, commercialization, or uncredited c
 🛠️ Local Development
 # 1. Clone repository
 https://github.com/aztanmoy07-tech/Suraksha-Kumbh.git
-cd SURAKSHA-KUMBH
+cd Suraksha-Kumbh
 
 # 2. Install dependencies
 npm install
