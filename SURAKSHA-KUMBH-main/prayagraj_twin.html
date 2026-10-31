@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>🔱 Prayagraj Sangam 3D Digital Twin - Suraksha Kumbh 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:#0b0f19;font-family:'Plus Jakarta Sans',sans-serif;overflow:hidden;color:#e2e8f0;user-select:none;}
+  canvas{display:block;width:100vw;height:100vh;}
+  .font-mono{font-family:'JetBrains Mono',monospace;}
+
+  /* UI OVERLAYS */
+  #ui{position:fixed;top:0;left:0;right:0;z-index:20;pointer-events:none;}
+  #header{background:rgba(15,23,42,0.85);backdrop-filter:blur(14px);
+    padding:10px 20px;display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid rgba(255,255,255,0.08);box-shadow:0 4px 20px rgba(0,0,0,0.3);}
+  .badge-tag{background:linear-gradient(135deg,#ea580c,#f59e0b);color:#fff;
+    font-size:9px;font-weight:800;padding:2px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:0.06em;}
+  
+  .btn-action{pointer-events:all;background:#2563eb;color:#fff;border:none;
+    padding:7px 14px;border-radius:10px;font-size:11px;font-weight:700;
+    cursor:pointer;text-decoration:none;transition:all .2s;display:inline-flex;align-items:center;gap:6px;}
+  .btn-action:hover{background:#1d4ed8;transform:translateY(-1px);}
+
+  /* CONTROL TOOLBAR */
+  #toolbar{position:fixed;top:68px;left:20px;z-index:20;display:flex;gap:8px;flex-wrap:wrap;}
+  .tool-btn{background:rgba(15,23,42,0.8);backdrop-filter:blur(10px);color:#94a3b8;
+    border:1px solid rgba(255,255,255,0.1);padding:6px 12px;border-radius:10px;font-size:11px;
+    font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;}
+  .tool-btn:hover,.tool-btn.active{background:#ea580c;color:#fff;border-color:#ea580c;transform:translateY(-1px);}
+
+  /* SECTOR INSPECTOR CARD (MODAL / HUD) */
+  #sector-hud{position:fixed;bottom:24px;right:24px;width:320px;background:rgba(15,23,42,0.92);
+    backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.12);border-radius:18px;
+    padding:16px;z-index:25;box-shadow:0 12px 36px rgba(0,0,0,0.5);display:none;animation:slideUp .25s ease-out;}
+  @keyframes slideUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+
+  /* LEGEND */
+  #legend{position:fixed;bottom:24px;left:24px;background:rgba(15,23,42,0.85);
+    backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.08);border-radius:16px;
+    padding:12px 16px;z-index:20;pointer-events:none;}
+  .leg-row{display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:10px;}
+  .leg-dot{width:10px;height:10px;border-radius:50%;}
+
+  /* WATERMARK & TAMPER SIGNATURE */
+  #watermark{position:fixed;bottom:6px;left:50%;transform:translateX(-50%);
+    font-size:9px;color:rgba(148,163,184,0.6);letter-spacing:0.04em;pointer-events:none;z-index:10;}
+</style>
+</head>
+<body>
+
+<!-- TOP HEADER -->
+<div id="ui">
+  <div id="header">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="font-size:20px;">🔱</span>
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <h1 style="font-size:14px;font-weight:800;letter-spacing:0.02em;">PRAYAGRAJ SANGAM DIGITAL TWIN</h1>
+          <span class="badge-tag">Maha Kumbh 2026</span>
+          <span id="night-badge" class="badge-tag" style="background:#475569;display:none;">Night Aarti Mode</span>
+        </div>
+        <p style="font-size:10px;color:#94a3b8;margin-top:1px;" class="font-mono">Spatial Confluence Telemetry & Dynamic Flood/Crowd Simulation</p>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span id="telemetry-status" style="font-size:11px;color:#22c55e;" class="font-mono">
+        <i class="fas fa-circle-dot" style="font-size:8px;"></i> LIVE CDSI FEED
+      </span>
+      <a class="btn-action" href="index.html">
+        <i class="fas fa-desktop"></i>
+        <span>Command Center</span>
+      </a>
+      <a class="btn-action" href="User_Interface.html" style="background:#ea580c;">
+        <i class="fas fa-mobile-screen"></i>
+        <span>Pilgrim App</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- CAMERA & MODE TOOLBAR -->
+<div id="toolbar">
+  <button class="tool-btn active" onclick="setCameraView('overview', this)"><i class="fas fa-globe"></i> Tactical Orbit</button>
+  <button class="tool-btn" onclick="setCameraView('flyover', this)"><i class="fas fa-helicopter"></i> Drone Flyover</button>
+  <button class="tool-btn" onclick="setCameraView('sangam', this)"><i class="fas fa-water"></i> Sangam Nose</button>
+  <button class="tool-btn" onclick="setCameraView('pontoon', this)"><i class="fas fa-bridge"></i> Pontoon 3 & 4</button>
+  <button class="tool-btn" onclick="toggleNightMode(this)"><i class="fas fa-moon"></i> Evening Aarti</button>
+</div>
+
+<!-- SECTOR INSPECTOR HUD -->
+<div id="sector-hud">
+  <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
+    <div>
+      <span id="hud-sec-code" class="font-mono" style="font-size:9px;background:#334155;color:#f8fafc;padding:2px 6px;border-radius:4px;">SEC-01</span>
+      <h3 id="hud-sec-name" style="font-size:14px;font-weight:800;color:#fff;margin-top:2px;">Sangam Nose</h3>
+    </div>
+    <button onclick="closeHud()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:14px;"><i class="fas fa-times"></i></button>
+  </div>
+  <div style="margin-bottom:10px;">
+    <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+      <span style="color:#94a3b8;">Crowd Surge Density</span>
+      <span id="hud-sec-density" class="font-mono" style="font-weight:700;color:#ef4444;">4.2 ppl/m²</span>
+    </div>
+    <div style="width:100%;height:6px;background:#1e293b;border-radius:999px;overflow:hidden;">
+      <div id="hud-sec-bar" style="width:85%;height:100%;background:#ef4444;transition:width 0.5s;"></div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:10px;margin-bottom:12px;">
+    <div style="background:rgba(255,255,255,0.04);padding:6px 8px;border-radius:8px;">
+      <span style="color:#64748b;display:block;">Capacity State</span>
+      <strong id="hud-sec-cap" style="color:#f8fafc;">85% Critical</strong>
+    </div>
+    <div style="background:rgba(255,255,255,0.04);padding:6px 8px;border-radius:8px;">
+      <span style="color:#64748b;display:block;">Pedestrian Flow</span>
+      <strong id="hud-sec-flow" class="font-mono" style="color:#38bdf8;">+420/min</strong>
+    </div>
+  </div>
+  <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;font-size:10px;color:#94a3b8;">
+    <span style="display:block;margin-bottom:2px;"><i class="fas fa-shield-halved text-orange-400"></i> Protocol Action:</span>
+    <p id="hud-sec-action" style="color:#cbd5e1;line-height:1.4;">Active Inflow Diversion to Jhunsi Holding Paddock</p>
+  </div>
+</div>
+
+<!-- DENSITY LEGEND -->
+<div id="legend">
+  <div style="font-size:9px;font-weight:800;color:#94a3b8;text-transform:uppercase;margin-bottom:6px;letter-spacing:0.06em;">CDSI Threat Matrix</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#22c55e;"></div><span>Safe (&lt; 2.0 ppl/m²)</span></div>
+  <div class="leg-row"><div class="leg-dot" style="background:#f59e0b;"></div><span>Warning (2.0 - 3.5 ppl/m²)</span></div>
+  <div class="leg-row"><div class="leg-dot" style="background:#ef4444;"></div><span style="color:#ef4444;font-weight:700;">Stampede Risk (&gt; 3.5 ppl/m²)</span></div>
+</div>
+
+<!-- WATERMARK FOOTER -->
+<div id="watermark">
+  🔱 SURAKSHA KUMBH 2026 • SPATIAL DIGITAL TWIN • LICENSED UNDER SURAKSHA CORE PROTOCOL • AUTHORED BY OJSHWI RAJ
+</div>
+
+<!-- THREE.JS SIMULATION LOGIC -->
+<script>
+// --- ANTI-TAMPER / INTELLECTUAL PROPERTY SIGNATURE ---
+window.__SURAKSHA_CORE_SIGNATURE__ = "SURAKSHA-KUMBH-SECURE-NODE-2026-AUTH-OJSHWIRAJ";
+Object.freeze(window.__SURAKSHA_CORE_SIGNATURE__);
+
+// --- 1. SCENE SETUP ---
+const W = window.innerWidth, H = window.innerHeight;
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(W, H);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const skyDay = new THREE.Color(0x0f172a);
+const skyNight = new THREE.Color(0x030712);
+scene.background = skyDay;
+scene.fog = new THREE.FogExp2(0x0f172a, 0.012);
+
+const camera = new THREE.PerspectiveCamera(52, W / H, 0.1, 1000);
+camera.position.set(0, 36, 54);
+camera.lookAt(0, 0, 0);
+
+// --- 2. LIGHTING RIG ---
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+scene.add(ambientLight);
+
+const sunLight = new THREE.DirectionalLight(0xffedd5, 1.4);
+sunLight.position.set(40, 70, 30);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.set(2048, 2048);
+sunLight.shadow.camera.near = 1; sunLight.shadow.camera.far = 300;
+sunLight.shadow.camera.left = sunLight.shadow.camera.bottom = -70;
+sunLight.shadow.camera.right = sunLight.shadow.camera.top = 70;
+scene.add(sunLight);
+
+// Ganga & Yamuna Accent Lights
+const waterGlow = new THREE.PointLight(0x0284c7, 1.2, 80);
+waterGlow.position.set(0, 2, 0);
+scene.add(waterGlow);
+
+// Aarti Lantern PointLights (for night mode)
+const aartiLights = [];
+[[-24, 2, 0], [2, 2, -2], [24, 2, 0]].forEach(([x, y, z]) => {
+  const pl = new THREE.PointLight(0xf97316, 0, 35);
+  pl.position.set(x, y, z);
+  scene.add(pl);
+  aartiLights.push(pl);
+});
+
+// --- 3. TERRAIN GEOMETRY ---
+const groundGeo = new THREE.PlaneGeometry(160, 110, 48, 36);
+const gPos = groundGeo.attributes.position;
+for (let i = 0; i < gPos.count; i++) {
+  const x = gPos.getX(i), z = gPos.getZ(i);
+  // Natural riverbank sloping
+  const bankElevation = Math.sin(x * 0.1) * 1.2 + Math.cos(z * 0.12) * 0.8;
+  gPos.setY(i, bankElevation);
+}
+groundGeo.computeVertexNormals();
+const groundMat = new THREE.MeshStandardMaterial({
+  color: 0xc2a67a,
+  roughness: 0.9,
+  metalness: 0.05
+});
+const terrain = new THREE.Mesh(groundGeo, groundMat);
+terrain.rotation.x = -Math.PI / 2;
+terrain.receiveShadow = true;
+scene.add(terrain);
+
+// --- 4. RIVER (GANGA & YAMUNA CONFLUENCE WITH DYNAMIC RIPPLES) ---
+const riverGeo = new THREE.PlaneGeometry(80, 42, 80, 42);
+const riverOrigPos = new Float32Array(riverGeo.attributes.position.array);
+const riverMat = new THREE.MeshStandardMaterial({
+  color: 0x0369a1,
+  roughness: 0.15,
+  metalness: 0.65,
+  transparent: true,
+  opacity: 0.88
+});
+const river = new THREE.Mesh(riverGeo, riverMat);
+river.rotation.x = -Math.PI / 2;
+river.position.set(0, 0.25, 0);
+scene.add(river);
+
+// --- 5. PONTOON BRIDGES WITH RAILINGS ---
+const bridgeMat = new THREE.MeshStandardMaterial({ color: 0x785338, roughness: 0.7 });
+const pontoonFloatMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.5 });
+
+function createPontoonBridge(zPos) {
+  const bridgeGroup = new THREE.Group();
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(24, 0.4, 3.2), bridgeMat);
+  deck.castShadow = true; deck.receiveShadow = true;
+  bridgeGroup.add(deck);
+
+  // Floating pontoons underneath
+  for (let px = -10; px <= 10; px += 3.2) {
+    const pontoon = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 3.6, 12), pontoonFloatMat);
+    pontoon.rotation.x = Math.PI / 2;
+    pontoon.position.set(px, -0.4, 0);
+    pontoon.castShadow = true;
+    bridgeGroup.add(pontoon);
+  }
+
+  // Safety railings
+  const railGeo = new THREE.BoxGeometry(24, 0.08, 0.08);
+  const railMat = new THREE.MeshBasicMaterial({ color: 0xf97316 });
+  const railL = new THREE.Mesh(railGeo, railMat);
+  railL.position.set(0, 0.6, 1.5);
+  const railR = new THREE.Mesh(railGeo, railMat);
+  railR.position.set(0, 0.6, -1.5);
+  bridgeGroup.add(railL); bridgeGroup.add(railR);
+
+  bridgeGroup.position.set(0, 0.8, zPos);
+  scene.add(bridgeGroup);
+}
+createPontoonBridge(-10); // Pontoon 3
+createPontoonBridge(10);  // Pontoon 4
+
+// --- 6. ANIMATED RESCUE MOTOR BOATS (NDRF / SDRF WATER WING) ---
+const boats = [];
+function createRescueBoat(color, initX, initZ, speed) {
+  const boat = new THREE.Group();
+  const hull = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.6, 1.1), new THREE.MeshStandardMaterial({ color }));
+  hull.castShadow = true; boat.add(hull);
+  const flag = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.8, 4), new THREE.MeshBasicMaterial({ color: 0xf97316 }));
+  flag.position.set(-0.8, 0.6, 0); boat.add(flag);
+  boat.position.set(initX, 0.4, initZ);
+  scene.add(boat);
+  boats.push({ mesh: boat, speed, minX: -26, maxX: 26, dir: 1 });
+}
+createRescueBoat(0xdc2626, -14, -4, 0.08); // NDRF QRB-1
+createRescueBoat(0x2563eb, 12, 4, -0.06);  // SDRF River Patrol 2
+
+// --- 7. CRITICAL SECTORS & HOLOGRAPHIC CROWD BEACONS ---
+const SECTOR_DATA = [
+  { id: 'sangam-nose', code: 'SEC-01', name: 'Sangam Nose (Triveni Confluence)', pos: [2, 0, -2], density: 3.8, cap: 85, flow: '+420/min', action: 'Inflow throttled • Use South pedestrian ring' },
+  { id: 'ram-ghat', code: 'SEC-02', name: 'Ram Ghat & Dashashwamedh', pos: [-24, 0, 0], density: 2.1, cap: 55, flow: '+180/min', action: 'Nominal flow • Routine Aarti patrols' },
+  { id: 'pontoon-3', code: 'SEC-03', name: 'Pontoon Bridge #3 (Daraganj)', pos: [0, 0, -10], density: 4.1, cap: 92, flow: '+580/min', action: 'CRITICAL STAMPEDE RISK • Divert to Jhunsi' },
+  { id: 'pontoon-4', code: 'SEC-04', name: 'Pontoon Bridge #4 (Jhunsi)', pos: [0, 0, 10], density: 3.9, cap: 88, flow: '+490/min', action: 'High Surge • Reverse one-way lane active' },
+  { id: 'arail-ghat', code: 'SEC-06', name: 'Arail Ghat Tent City', pos: [26, 0, 0], density: 1.4, cap: 35, flow: '+90/min', action: 'Clear ingress • Free transit' }
+];
+
+const sectorMeshes = [];
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+function getDensityColor(d) {
+  if (d >= 3.5) return 0xef4444; // Red
+  if (d >= 2.0) return 0xf59e0b; // Amber
+  return 0x22c55e; // Green
+}
+
+SECTOR_DATA.forEach(sec => {
+  const col = getDensityColor(sec.density);
+  
+  // Holographic Cylinder
+  const cylGeo = new THREE.CylinderGeometry(2.2, 2.8, 6, 24, 1, true);
+  const cylMat = new THREE.MeshBasicMaterial({
+    color: col,
+    transparent: true,
+    opacity: 0.35,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  });
+  const beacon = new THREE.Mesh(cylGeo, cylMat);
+  beacon.position.set(sec.pos[0], 3, sec.pos[2]);
+  scene.add(beacon);
+
+  // Outer Glowing Ring
+  const ringGeo = new THREE.RingGeometry(2.4, 3.2, 32);
+  const ringMat = new THREE.MeshBasicMaterial({ color: col, side: THREE.DoubleSide });
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.set(sec.pos[0], 0.4, sec.pos[2]);
+  scene.add(ring);
+
+  // Center Marker Sphere (Click target)
+  const sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(1.2, 16, 16),
+    new THREE.MeshStandardMaterial({ color: col, roughness: 0.3, emissive: col, emissiveIntensity: 0.4 })
+  );
+  sphere.position.set(sec.pos[0], 1.2, sec.pos[2]);
+  sphere.userData = sec;
+  scene.add(sphere);
+
+  // Label Sprite
+  const canvas = document.createElement('canvas');
+  canvas.width = 256; canvas.height = 72;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'rgba(15,23,42,0.85)';
+  ctx.roundRect(4, 4, 248, 64, 12); ctx.fill();
+  ctx.strokeStyle = '#f97316'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 20px Plus Jakarta Sans';
+  ctx.textAlign = 'center'; ctx.fillText(sec.name.split(' (')[0], 128, 28);
+  ctx.fillStyle = '#94a3b8'; ctx.font = '14px JetBrains Mono';
+  ctx.fillText(sec.density.toFixed(1) + ' ppl/m² • ' + sec.cap + '%', 128, 52);
+
+  const labelTex = new THREE.CanvasTexture(canvas);
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: labelTex, depthTest: false }));
+  sprite.scale.set(8, 2.2, 1);
+  sprite.position.set(sec.pos[0], 7.5, sec.pos[2]);
+  scene.add(sprite);
+
+  sectorMeshes.push({ sec, beacon, ring, sphere, sprite, canvas, ctx, labelTex });
+});
+
+// --- 8. CROWD PARTICLE STREAM (FLOW ALONG BRIDGES) ---
+const particleCount = 200;
+const particleGeo = new THREE.BufferGeometry();
+const particlePos = new Float32Array(particleCount * 3);
+for (let i = 0; i < particleCount; i++) {
+  particlePos[i * 3] = (Math.random() - 0.5) * 30;
+  particlePos[i * 3 + 1] = 1.0;
+  particlePos[i * 3 + 2] = (Math.random() > 0.5 ? -10 : 10) + (Math.random() - 0.5) * 2;
+}
+particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePos, 3));
+const particleMat = new THREE.PointsMaterial({ color: 0xfde047, size: 0.4, transparent: true, opacity: 0.8 });
+const crowdStream = new THREE.Points(particleGeo, particleMat);
+scene.add(crowdStream);
+
+// --- 9. INTERACTIVE CAMERA CONTROLS ---
+let isDragging = false, lastMouseX = 0, lastMouseY = 0;
+let camTheta = 0, camPhi = Math.PI / 4, camRadius = 55;
+let targetLookAt = new THREE.Vector3(0, 0, 0);
+let currentLookAt = new THREE.Vector3(0, 0, 0);
+let isFlyoverActive = false;
+
+window.addEventListener('mousedown', (e) => {
+  if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return;
+  isDragging = true; lastMouseX = e.clientX; lastMouseY = e.clientY;
+});
+window.addEventListener('mouseup', () => isDragging = false);
+window.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  isFlyoverActive = false;
+  const dx = e.clientX - lastMouseX;
+  const dy = e.clientY - lastMouseY;
+  lastMouseX = e.clientX; lastMouseY = e.clientY;
+  camTheta -= dx * 0.006;
+  camPhi = Math.max(0.12, Math.min(Math.PI / 2.1, camPhi - dy * 0.006));
+});
+window.addEventListener('wheel', (e) => {
+  camRadius = Math.max(15, Math.min(120, camRadius + e.deltaY * 0.05));
+});
+
+// Click on Sector to Inspect
+window.addEventListener('click', (e) => {
+  if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return;
+  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+  const targets = sectorMeshes.map(m => m.sphere);
+  const hits = raycaster.intersectObjects(targets);
+  if (hits.length > 0) {
+    openHud(hits[0].object.userData);
+  }
+});
+
+function openHud(sec) {
+  const hud = document.getElementById('sector-hud');
+  document.getElementById('hud-sec-code').innerText = sec.code;
+  document.getElementById('hud-sec-name').innerText = sec.name;
+  document.getElementById('hud-sec-density').innerText = sec.density.toFixed(1) + ' ppl/m²';
+  document.getElementById('hud-sec-density').style.color = sec.density >= 3.5 ? '#ef4444' : (sec.density >= 2.0 ? '#f59e0b' : '#22c55e');
+  document.getElementById('hud-sec-bar').style.width = Math.min(100, sec.cap) + '%';
+  document.getElementById('hud-sec-bar').style.background = sec.density >= 3.5 ? '#ef4444' : (sec.density >= 2.0 ? '#f59e0b' : '#22c55e');
+  document.getElementById('hud-sec-cap').innerText = sec.cap + '% ' + (sec.cap >= 80 ? 'Critical' : 'Nominal');
+  document.getElementById('hud-sec-flow').innerText = sec.flow;
+  document.getElementById('hud-sec-action').innerText = sec.action;
+  hud.style.display = 'block';
+
+  // Smooth camera zoom onto selected sector
+  targetLookAt.set(sec.pos[0], 1, sec.pos[2]);
+  camRadius = 28;
+}
+
+function closeHud() {
+  document.getElementById('sector-hud').style.display = 'none';
+}
+
+function setCameraView(view, btn) {
+  document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  if (view === 'overview') {
+    isFlyoverActive = false;
+    targetLookAt.set(0, 0, 0);
+    camRadius = 55; camPhi = Math.PI / 4;
+  } else if (view === 'sangam') {
+    isFlyoverActive = false;
+    targetLookAt.set(2, 0, -2);
+    camRadius = 22; camPhi = 0.55;
+  } else if (view === 'pontoon') {
+    isFlyoverActive = false;
+    targetLookAt.set(0, 0, 0);
+    camRadius = 32; camPhi = 0.42; camTheta = Math.PI / 2;
+  } else if (view === 'flyover') {
+    isFlyoverActive = true;
+    targetLookAt.set(0, 0, 0);
+    camRadius = 48;
+  }
+}
+
+let isNight = false;
+function toggleNightMode(btn) {
+  isNight = !isNight;
+  const badge = document.getElementById('night-badge');
+  if (isNight) {
+    btn.classList.add('active');
+    btn.innerHTML = '<i class="fas fa-sun"></i> Daylight Mode';
+    scene.background = skyNight;
+    scene.fog.color = skyNight;
+    sunLight.intensity = 0.2;
+    ambientLight.intensity = 0.25;
+    aartiLights.forEach(l => l.intensity = 3.5);
+    badge.style.display = 'inline-block';
+  } else {
+    btn.classList.remove('active');
+    btn.innerHTML = '<i class="fas fa-moon"></i> Evening Aarti';
+    scene.background = skyDay;
+    scene.fog.color = skyDay;
+    sunLight.intensity = 1.4;
+    ambientLight.intensity = 0.65;
+    aartiLights.forEach(l => l.intensity = 0);
+    badge.style.display = 'none';
+  }
+}
+
+// --- 10. REAL-TIME CDSI POLLING ---
+async function pollCdsi() {
+  try {
+    const res = await fetch('/api/cdsi');
+    if (!res.ok) throw new Error('Network error');
+    const data = await res.json();
+    const sectors = data.sectors || data;
+    const sectorList = Array.isArray(sectors) ? sectors : Object.entries(sectors).map(([k, v]) => ({ id: k, ...v }));
+
+    sectorMeshes.forEach(item => {
+      const live = sectorList.find(s => s.id === item.sec.id || (s.name && s.name.includes(item.sec.name.split(' ')[0])));
+      if (live) {
+        item.sec.density = parseFloat(live.density || item.sec.density);
+        item.sec.cap = parseInt(live.capacity || item.sec.cap);
+        item.sec.flow = live.flowRate || item.sec.flow;
+        const newCol = getDensityColor(item.sec.density);
+
+        item.sphere.material.color.setHex(newCol);
+        item.sphere.material.emissive.setHex(newCol);
+        item.beacon.material.color.setHex(newCol);
+        item.ring.material.color.setHex(newCol);
+
+        // Redraw canvas label
+        const ctx = item.ctx;
+        ctx.clearRect(0, 0, 256, 72);
+        ctx.fillStyle = 'rgba(15,23,42,0.85)';
+        ctx.roundRect(4, 4, 248, 64, 12); ctx.fill();
+        ctx.strokeStyle = newCol === 0xef4444 ? '#ef4444' : '#f97316'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 20px Plus Jakarta Sans';
+        ctx.textAlign = 'center'; ctx.fillText(item.sec.name.split(' (')[0], 128, 28);
+        ctx.fillStyle = newCol === 0xef4444 ? '#f87171' : '#94a3b8'; ctx.font = '14px JetBrains Mono';
+        ctx.fillText(item.sec.density.toFixed(1) + ' ppl/m² • ' + item.sec.cap + '%', 128, 52);
+        item.labelTex.needsUpdate = true;
+      }
+    });
+    document.getElementById('telemetry-status').innerHTML = '<i class="fas fa-circle-dot" style="font-size:8px;"></i> LIVE CDSI (SYNCED)';
+  } catch (err) {
+    document.getElementById('telemetry-status').innerHTML = '<i class="fas fa-satellite-dish" style="font-size:8px;color:#f59e0b;"></i> MESH TELEMETRY ACTIVE';
+  }
+}
+pollCdsi();
+setInterval(pollCdsi, 8000);
+
+// --- 11. MAIN ANIMATION LOOP ---
+const clock = new THREE.Clock();
+function animate() {
+  requestAnimationFrame(animate);
+  const time = clock.getElapsedTime();
+
+  // Dynamic River Wave Ripples
+  const riverPos = riverGeo.attributes.position;
+  for (let i = 0; i < riverPos.count; i++) {
+    const ox = riverOrigPos[i * 3];
+    const oy = riverOrigPos[i * 3 + 1];
+    const zOffset = Math.sin(ox * 0.3 + time * 2.2) * 0.25 + Math.cos(oy * 0.35 + time * 1.8) * 0.18;
+    riverPos.setZ(i, zOffset);
+  }
+  riverGeo.computeVertexNormals();
+  riverPos.needsUpdate = true;
+
+  // Animate Rescue Boats
+  boats.forEach(b => {
+    b.mesh.position.x += b.speed * b.dir;
+    b.mesh.rotation.z = Math.sin(time * 3 + b.mesh.position.x) * 0.05; // Gentle rocking
+    if (b.mesh.position.x > b.maxX) b.dir = -1;
+    if (b.mesh.position.x < b.minX) b.dir = 1;
+  });
+
+  // Pulse Critical Holographic Beacons
+  sectorMeshes.forEach(item => {
+    if (item.sec.density >= 3.5) {
+      const pulse = 1 + Math.sin(time * 4) * 0.18;
+      item.beacon.scale.set(pulse, 1 + Math.sin(time * 3) * 0.15, pulse);
+      item.ring.scale.set(pulse, pulse, 1);
+    }
+  });
+
+  // Animate Crowd Stream Flow
+  const cPos = crowdStream.geometry.attributes.position;
+  for (let i = 0; i < particleCount; i++) {
+    cPos.setX(i, cPos.getX(i) + 0.08);
+    if (cPos.getX(i) > 16) cPos.setX(i, -16);
+  }
+  cPos.needsUpdate = true;
+
+  // Flyover Auto Rotation
+  if (isFlyoverActive) {
+    camTheta += 0.003;
+  }
+
+  // Smooth Camera Interpolation
+  currentLookAt.lerp(targetLookAt, 0.05);
+  camera.position.x = currentLookAt.x + camRadius * Math.sin(camPhi) * Math.sin(camTheta);
+  camera.position.y = currentLookAt.y + camRadius * Math.cos(camPhi);
+  camera.position.z = currentLookAt.z + camRadius * Math.sin(camPhi) * Math.cos(camTheta);
+  camera.lookAt(currentLookAt);
+
+  renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener('resize', () => {
+  const nW = window.innerWidth, nH = window.innerHeight;
+  camera.aspect = nW / nH;
+  camera.updateProjectionMatrix();
+  renderer.setSize(nW, nH);
+});
+</script>
+<script src="suraksha_guard.js"></script>
+</body>
+</html>

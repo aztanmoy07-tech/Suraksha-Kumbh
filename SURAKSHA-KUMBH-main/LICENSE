@@ -1,0 +1,20 @@
+SURAKSHA KUMBH SOURCE-AVAILABLE & ANTI-PLAGIARISM LICENSE (2026)
+
+Copyright (c) 2026 OjshwiRaj (Team Saral). All Rights Reserved.
+
+TERMS AND CONDITIONS FOR REPOSITORY USE AND DISTRIBUTION
+
+1. INTELLECTUAL PROPERTY & PROPRIETARY ARCHITECTURE:
+   The source code, algorithmic logic (including the Crowd Density Safety Index [CDSI] calculation engine, the 3D Sangam Digital Twin simulation, and the Zero-WAN Tactical Mesh Protocol), user interfaces, and documentation contained in this repository are the proprietary intellectual property of OjshwiRaj (Team Saral).
+
+2. RESTRICTIONS ON CLONING, COPYING, AND RE-DISTRIBUTION:
+   - DIRECT COPYING, RE-HOSTING, OR RE-BRANDING WITHOUT EXPLICIT PERMISSION IS STRICTLY PROHIBITED.
+   - Any individual or organization is expressly forbidden from presenting, publishing, competing with, or distributing this codebase (in whole or in substantial part) under another name or authorship without prior written authorization from OjshwiRaj.
+   - Removing, obscuring, or altering the embedded cryptographic integrity signatures (`__SURAKSHA_CORE_SIGNATURE__`), watermark badges, or copyright headers is a violation of this license.
+
+3. PERMITTED EVALUATION:
+   - Hackathon judges, academic reviewers, and authorized partners are granted full permission to inspect, execute, run, and review the codebase for official evaluation purposes.
+   - Personal educational review is permitted provided all original attribution to OjshwiRaj is preserved.
+
+4. DISCLAIMER:
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

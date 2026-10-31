@@ -1,0 +1,18 @@
+{
+  "name": "suraksha-kumbh",
+  "version": "2.0.0",
+  "description": "Suraksha Kumbh Maha Mela Disaster Management & Crowd Safety System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "axios": "^1.13.2",
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

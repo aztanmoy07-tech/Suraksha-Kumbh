@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/user", "destination": "/User_Interface.html" },
+    { "source": "/twin", "destination": "/prayagraj_twin.html" },
+    { "source": "/api/cap", "destination": "/api/cap.js" },
+    { "source": "/api/cdsi", "destination": "/api/cdsi.js" }
+  ]
+}

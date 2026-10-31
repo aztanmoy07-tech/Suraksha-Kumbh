@@ -1,0 +1,1746 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Suraksha Kumbh (सुरक्षा कुंभ) - Pilgrim Companion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        kumbh: {
+                            orange: '#ea580c',
+                            amber: '#f59e0b',
+                            navy: '#0f172a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Face API -->
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        #map {
+            height: 100%;
+            width: 100%;
+            min-height: 280px;
+            z-index: 1;
+        }
+        @keyframes pulseRing {
+            0% { transform: scale(0.96); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+            70% { transform: scale(1); box-shadow: 0 0 0 16px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.96); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .sos-pulse {
+            animation: pulseRing 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+        }
+    </style>
+<script>
+const I18N = {
+  en: { sos_title:"Kumbh Emergency SOS", sos_sub:"Transmits GPS to Sector Police & QRT teams instantly", tap_sos:"TAP FOR SOS", mesh_note:"Auto-switches to Offline Mesh if internet fails", voice_guard:"Voice Guard", voice_hint:'Say "Help" or "Bachao"', health_title:"Health Triage", health_minor:"🟢 Minor", health_mod:"🟡 Moderate", health_crit:"🔴 Critical", sms_btn:"SMS Backup → Police (112)", nav_title:"Kumbh Safe Route", nav_btn:"NAVIGATE TO SAFE GHAT", nav_sub:"Routes even/odd Pilgrim IDs to alternate corridors", aid_title:"Request Emergency Aid", aid_sub:"Dispatched from central depot to your location", water:"Drinking Water", food:"Food / Prasad", firstaid:"First Aid Kit", blanket:"Warm Blanket", jacket:"Life Jacket", lost:"Lost Person Report", mesh_tab:"Mesh Radio (Offline)", status_safe:"AREA SAFE • ALL GHATS OPERATIONAL" },
+  hi: { sos_title:"आपातकालीन SOS – कुंभ मेला", sos_sub:"आपका GPS सीधे पुलिस और QRT टीम को भेजा जाएगा", tap_sos:"SOS दबाएं", mesh_note:"इंटरनेट बंद होने पर मेश रेडियो स्वतः चालू होगा", voice_guard:"वॉयस गार्ड", voice_hint:'"Help" या "बचाओ" बोलें', health_title:"स्वास्थ्य ट्राइज", health_minor:"🟢 सामान्य", health_mod:"🟡 मध्यम", health_crit:"🔴 गंभीर", sms_btn:"SMS से पुलिस (112) को अलर्ट भेजें", nav_title:"कुंभ सुरक्षित मार्ग", nav_btn:"सुरक्षित घाट की ओर नेविगेट करें", nav_sub:"सम/विषम तीर्थयात्री ID के आधार पर वैकल्पिक मार्ग", aid_title:"आपातकालीन सहायता मांगें", aid_sub:"केंद्रीय डिपो से आपके स्थान पर सामग्री भेजी जाएगी", water:"पेयजल / ORS", food:"अन्न / महाप्रसाद", firstaid:"प्राथमिक चिकित्सा किट", blanket:"ऊनी कंबल", jacket:"लाइफ जैकेट", lost:"लापता व्यक्ति की रिपोर्ट", mesh_tab:"मेश रेडियो (ऑफलाइन)", status_safe:"क्षेत्र सुरक्षित • सभी घाट चालू हैं" },
+  mr: { sos_title:"आणीबाणी SOS – कुंभ मेळा", sos_sub:"तुमचे GPS स्थान पोलीस व QRT ला पाठवले जाईल", tap_sos:"SOS दाबा", mesh_note:"इंटरनेट नसल्यास मेश रेडिओ आपोआप सुरू होईल", voice_guard:"व्हॉइस गार्ड", voice_hint:'"Help" किंवा "वाचवा" बोला', health_title:"आरोग्य ट्रायेज", health_minor:"🟢 किरकोळ", health_mod:"🟡 मध्यम", health_crit:"🔴 गंभीर", sms_btn:"SMS ने पोलिसांना (112) सूचित करा", nav_title:"कुंभ सुरक्षित मार्ग", nav_btn:"सुरक्षित घाटाकडे नेव्हिगेट करा", nav_sub:"सम/विषम ID नुसार वेगळे मार्ग", aid_title:"आणीबाणी मदत मागा", aid_sub:"केंद्रीय डेपोमधून तुमच्या ठिकाणी पाठवले जाईल", water:"पिण्याचे पाणी / ORS", food:"अन्न / महाप्रसाद", firstaid:"प्राथमिक उपचार किट", blanket:"उबदार ब्लँकेट", jacket:"लाइफ जॅकेट", lost:"हरवलेल्या व्यक्तीचा अहवाल", mesh_tab:"मेश रेडिओ (ऑफलाइन)", status_safe:"क्षेत्र सुरक्षित • सर्व घाट चालू आहेत" },
+  bn: { sos_title:"জরুরি SOS – কুম্ভ মেলা", sos_sub:"আপনার GPS পুলিশ ও QRT দলে পাঠানো হবে", tap_sos:"SOS চাপুন", mesh_note:"ইন্টারনেট না থাকলে মেশ রেডিও চালু হবে", voice_guard:"ভয়েস গার্ড", voice_hint:'"সাহায্য" বা "বাঁচাও" বলুন', health_title:"স্বাস্থ্য ট্রাইয়াজ", health_minor:"🟢 সামান্য", health_mod:"🟡 মধ্যম", health_crit:"🔴 গুরুতর", sms_btn:"SMS-এ পুলিশকে (112) জানান", nav_title:"কুম্ভ নিরাপদ পথ", nav_btn:"নিরাপদ ঘাটে নেভিগেট করুন", nav_sub:"জোড়/বিজোড় ID অনুযায়ী বিকল্প পথ", aid_title:"জরুরি সাহায্য চাইুন", aid_sub:"কেন্দ্রীয় ডিপো থেকে আপনার কাছে পাঠানো হবে", water:"পানীয় জল / ORS", food:"খাবার / মহাপ্রসাদ", firstaid:"প্রাথমিক চিকিৎসা কিট", blanket:"উষ্ণ কম্বল", jacket:"লাইফ জ্যাকেট", lost:"নিখোঁজ ব্যক্তির রিপোর্ট", mesh_tab:"মেশ রেডিও (অফলাইন)", status_safe:"এলাকা নিরাপদ • সব ঘাট চালু আছে" },
+  ta: { sos_title:"அவசர SOS – கும்ப மேளா", sos_sub:"உங்கள் GPS காவல்துறை & QRT குழுவிற்கு அனுப்பப்படும்", tap_sos:"SOS அழுத்துக", mesh_note:"இணையம் இல்லை எனில் மெஷ் ரேடியோ தானாக இயங்கும்", voice_guard:"குரல் காவல்", voice_hint:'"Help" அல்லது "Bachao" சொல்லுங்கள்', health_title:"உடல்நல ட்ரையேஜ்", health_minor:"🟢 சிறிய", health_mod:"🟡 மிதமான", health_crit:"🔴 தீவிர", sms_btn:"SMS மூலம் காவல்துறையை (112) அறிவிக்க", nav_title:"கும்ப பாதுகாப்பான பாதை", nav_btn:"பாதுகாப்பான கடவுக்கு செல்க", nav_sub:"ஒற்றை/இரட்டை ID அடிப்படையில் மாற்று பாதை", aid_title:"அவசர உதவி கோருக", aid_sub:"மத்திய கிடங்கிலிருந்து உங்கள் இடத்திற்கு அனுப்பப்படும்", water:"குடிநீர் / ORS", food:"உணவு / மகாபிரசாதம்", firstaid:"முதலுதவி பெட்டி", blanket:"சூடான போர்வை", jacket:"லைஃப் ஜாக்கெட்", lost:"காணாமல் போனவர் அறிக்கை", mesh_tab:"மெஷ் ரேடியோ (ஆஃப்லைன்)", status_safe:"பகுதி பாதுகாப்பானது • அனைத்து கடவுகளும் இயங்குகின்றன" },
+  te: { sos_title:"అత్యవసర SOS – కుంభ మేళా", sos_sub:"మీ GPS పోలీసు & QRT బృందానికి పంపబడుతుంది", tap_sos:"SOS నొక్కండి", mesh_note:"ఇంటర్నెట్ లేకపోతే మెష్ రేడియో స్వయంచాలకంగా ప్రారంభమవుతుంది", voice_guard:"వాయిస్ గార్డ్", voice_hint:'"Help" లేదా "Bachao" అనండి', health_title:"ఆరోగ్య ట్రైయేజ్", health_minor:"🟢 స్వల్పం", health_mod:"🟡 మధ్యస్థం", health_crit:"🔴 తీవ్రం", sms_btn:"SMS ద్వారా పోలీసులకు (112) అప్రమత్తం చేయండి", nav_title:"కుంభ సురక్షిత మార్గం", nav_btn:"సురక్షిత ఘాట్‌కు నావిగేట్ చేయండి", nav_sub:"సరి/బేసి ID ఆధారంగా ప్రత్యామ్నాయ మార్గం", aid_title:"అత్యవసర సహాయం అభ్యర్థించండి", aid_sub:"కేంద్ర డిపో నుండి మీ స్థానానికి పంపబడుతుంది", water:"తాగునీరు / ORS", food:"ఆహారం / మహాప్రసాదం", firstaid:"ప్రాథమిక చికిత్స కిట్", blanket:"వెచ్చని దుప్పటి", jacket:"లైఫ్ జాకెట్", lost:"తప్పిపోయిన వ్యక్తి నివేదిక", mesh_tab:"మెష్ రేడియో (ఆఫ్‌లైన్)", status_safe:"ప్రాంతం సురక్షితం • అన్ని ఘాట్‌లు పనిచేస్తున్నాయి" },
+  gu: { sos_title:"કટોકટી SOS – કુંભ મેળો", sos_sub:"તમારું GPS સ્થાન પોલીસ અને QRT ટીમને મોકલાશે", tap_sos:"SOS દબાવો", mesh_note:"ઈન્ટરનેટ ન હોય તો મેશ રેડિયો આપમેળે ચાલુ થશે", voice_guard:"વૉઈસ ગાર્ડ", voice_hint:'"Help" અથવા "Bachao" બોલો', health_title:"આરોગ્ય ટ્રાઇઝ", health_minor:"🟢 સામાન્ય", health_mod:"🟡 મધ્યમ", health_crit:"🔴 ગંભીર", sms_btn:"SMS દ્વારા પોલીસ (112) ને જાણ કરો", nav_title:"કુંભ સુરક્ષિત માર્ગ", nav_btn:"સુરક્ષિત ઘાટ તરફ નેવિગેટ કરો", nav_sub:"સમ/વિષમ ID અનુસાર વૈકલ્પિક માર્ગ", aid_title:"કટોકટી સહાય માગો", aid_sub:"કેન્દ્રીય ડેપોમાંથી તમારા સ્થાન પર મોકલાશે", water:"પીવાનું પાણી / ORS", food:"ભોજન / મહાપ્રસાદ", firstaid:"પ્રાથમિક સારવાર કીટ", blanket:"ગરમ ધાબળ", jacket:"લાઇફ જૅકેટ", lost:"ગુમ થયેલ વ્યક્તિ અહેવાલ", mesh_tab:"મેશ રેડિયો (ઓફલાઇન)", status_safe:"વિસ્તાર સુરક્ષિત • બધા ઘાટ ચાલુ છે" },
+  pa: { sos_title:"ਐਮਰਜੈਂਸੀ SOS – ਕੁੰਭ ਮੇਲਾ", sos_sub:"ਤੁਹਾਡਾ GPS ਸਥਾਨ ਪੁਲਿਸ ਅਤੇ QRT ਟੀਮ ਨੂੰ ਭੇਜਿਆ ਜਾਵੇਗਾ", tap_sos:"SOS ਦਬਾਓ", mesh_note:"ਇੰਟਰਨੈੱਟ ਨਾ ਹੋਣ 'ਤੇ ਮੈਸ਼ ਰੇਡੀਓ ਆਪਣੇ ਆਪ ਚਾਲੂ ਹੋਵੇਗਾ", voice_guard:"ਵੌਇਸ ਗਾਰਡ", voice_hint:'"Help" ਜਾਂ "Bachao" ਬੋਲੋ', health_title:"ਸਿਹਤ ਟ੍ਰਾਈਏਜ਼", health_minor:"🟢 ਸਧਾਰਨ", health_mod:"🟡 ਦਰਮਿਆਨਾ", health_crit:"🔴 ਗੰਭੀਰ", sms_btn:"SMS ਰਾਹੀਂ ਪੁਲਿਸ (112) ਨੂੰ ਸੁਚੇਤ ਕਰੋ", nav_title:"ਕੁੰਭ ਸੁਰੱਖਿਅਤ ਰਸਤਾ", nav_btn:"ਸੁਰੱਖਿਅਤ ਘਾਟ ਵੱਲ ਜਾਓ", nav_sub:"ਜੋੜੇ/ਟੱਕ ID ਅਨੁਸਾਰ ਵੱਖਰਾ ਰਸਤਾ", aid_title:"ਐਮਰਜੈਂਸੀ ਸਹਾਇਤਾ ਮੰਗੋ", aid_sub:"ਕੇਂਦਰੀ ਡਿਪੋ ਤੋਂ ਤੁਹਾਡੀ ਜਗ੍ਹਾ ਭੇਜਿਆ ਜਾਵੇਗਾ", water:"ਪੀਣ ਵਾਲਾ ਪਾਣੀ / ORS", food:"ਭੋਜਨ / ਮਹਾਪ੍ਰਸਾਦ", firstaid:"ਪਹਿਲੀ ਸਹਾਇਤਾ ਕਿੱਟ", blanket:"ਗਰਮ ਕੰਬਲ", jacket:"ਲਾਈਫ਼ ਜੈਕੇਟ", lost:"ਗੁੰਮ ਵਿਅਕਤੀ ਰਿਪੋਰਟ", mesh_tab:"ਮੈਸ਼ ਰੇਡੀਓ (ਔਫਲਾਈਨ)", status_safe:"ਖੇਤਰ ਸੁਰੱਖਿਅਤ • ਸਾਰੇ ਘਾਟ ਚਾਲੂ ਹਨ" }
+};
+let currentLang = localStorage.getItem('suraksha_lang') || 'hi';
+function t(key) { return (I18N[currentLang] || I18N.hi)[key] || I18N.en[key] || key; }
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.getAttribute('data-i18n');
+    el.innerText = t(k);
+  });
+}
+function changeLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('suraksha_lang', lang);
+  applyI18n();
+  const banner = document.getElementById('status-banner-text');
+  if (banner) banner.innerText = t('status_safe');
+}
+document.addEventListener('DOMContentLoaded', applyI18n);
+</script>
+</head>
+
+<body class="bg-slate-50 text-slate-800 dark:bg-[#0b0f17] dark:text-slate-100 min-h-screen flex flex-col pb-24 select-none transition-colors">
+
+    <!-- DISASTER OVERLAY (MODAL POPUP) -->
+    <div id="user-disaster-alert"
+        class="hidden fixed inset-0 z-[2000] flex flex-col items-center justify-center text-white p-6 text-center bg-red-700/95 backdrop-blur-md">
+        <div class="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mb-4 border border-white/20 animate-bounce">
+            <i class="fas fa-bullhorn text-4xl text-amber-300"></i>
+        </div>
+        <h1 class="text-3xl font-black uppercase mb-1 tracking-wider">MELA EMERGENCY ADVISORY</h1>
+        <h2 id="user-alert-type" class="text-xl font-bold mb-4 bg-black/30 px-4 py-1.5 rounded-lg border border-white/20">ALERT BROADCAST</h2>
+        <p id="user-alert-msg" class="text-sm text-red-100 max-w-md mb-8">Follow police loudspeaker directions and move calmly towards marked Safe Zones.</p>
+        <button onclick="dismissUserAlert()"
+            class="bg-white text-red-700 px-8 py-3.5 rounded-xl font-extrabold text-base shadow-2xl hover:scale-105 active:scale-95 transition">
+            I AM SAFE (स्थिति समझी)
+        </button>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container" class="fixed top-16 left-1/2 -translate-x-1/2 z-[3500] w-11/12 max-w-sm pointer-events-none flex flex-col gap-2"></div>
+
+    <!-- APP NAVBAR (SEVA-SYNC INSPIRED LIGHT / DARK DESIGN) -->
+    <nav class="bg-white dark:bg-[#111827] border-b border-slate-200 dark:border-slate-800 px-4 py-3 sticky top-0 z-50 shadow-sm transition-colors">
+        <div class="max-w-4xl mx-auto flex items-center justify-between gap-3">
+            
+            <!-- BRANDING & LOGO -->
+            <div class="flex items-center gap-2.5">
+                <div class="p-1 rounded-xl bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800/60 shadow-sm">
+                    <img src="logo.png" alt="Suraksha Kumbh Logo" class="w-8 h-8 object-contain">
+                </div>
+                <div>
+                    <div class="flex items-center gap-1.5">
+                        <h1 class="text-base font-black tracking-tight text-slate-900 dark:text-white uppercase">
+                            SURAKSHA KUMBH
+                        </h1>
+                        <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400">
+                            सुरक्षा कुंभ
+                        </span>
+                    </div>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Maha Kumbh Pilgrim Safety Companion</p>
+                </div>
+            </div>
+
+            <!-- CONTROLS: THEME, PILGRIM ID, LANGUAGE -->
+            <div class="flex items-center gap-2">
+                <a href="prayagraj_twin.html" target="_blank" class="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 text-xs font-bold transition flex items-center gap-1" title="3D Digital Twin">
+                    <i class="fas fa-cube"></i>
+                    <span class="hidden md:inline">3D</span>
+                </a>
+                <a href="index.html" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition flex items-center gap-1" title="Command Center">
+                    <i class="fas fa-desktop"></i>
+                    <span class="hidden md:inline">ICCC</span>
+                </a>
+                <button onclick="toggleTheme()"
+                    class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-amber-400 transition"
+                    title="Toggle Light / Dark Mode">
+                    <i class="fas fa-sun text-amber-500 dark:hidden text-xs"></i>
+                    <i class="fas fa-moon text-blue-400 hidden dark:inline text-xs"></i>
+                </button>
+
+                <div class="hidden sm:flex items-center gap-2">
+                    <span id="offline-queue-badge" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-400">
+                        ⚡ Mesh Sync: 0
+                    </span>
+                    <div class="text-right">
+                        <div class="text-[8px] text-slate-400 font-mono">ID</div>
+                        <div class="text-[10px] font-mono font-bold text-orange-600 dark:text-orange-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700" id="user-id-display">...</div>
+                    </div>
+                </div>
+
+                <select onchange="changeLanguage(this.value)" id="lang-select"
+                    class="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 focus:outline-none">
+                    <option value="hi">🇮🇳 हिन्दी</option>
+                    <option value="en">🇬🇧 EN</option>
+                    <option value="mr">🇮🇳 मराठी</option>
+                    <option value="bn">🇮🇳 বাংলা</option>
+                    <option value="ta">🇮🇳 தமிழ்</option>
+                    <option value="te">🇮🇳 తెలుగు</option>
+                    <option value="gu">🇮🇳 ગુજ.</option>
+                    <option value="pa">🇮🇳 ਪੰਜਾਬੀ</option>
+                </select>
+            </div>
+        </div>
+    </nav>
+
+    <!-- LIVE STATUS BAR -->
+    <div class="bg-emerald-600 text-white px-4 py-1.5 text-center font-bold text-xs shadow-sm flex items-center justify-center gap-2" id="status-banner">
+        <i class="fas fa-shield-check"></i>
+        <span id="status-banner-text">STATUS: AREA SAFE & ALL GHATS OPERATIONAL</span>
+    </div>
+
+    <!-- MAIN BODY -->
+    <main class="flex-grow max-w-4xl w-full mx-auto p-4 flex flex-col gap-4">
+
+        <!-- PILGRIM ID & OFFLINE QUEUE (MOBILE VIEW) -->
+        <div class="sm:hidden bg-white dark:bg-[#111827] p-3 rounded-2xl flex items-center justify-between border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-id-badge text-orange-500"></i>
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Pilgrim ID:</span>
+                <span class="text-xs font-mono font-bold text-orange-600 dark:text-orange-400" id="user-id-display-mobile">...</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="offline-queue-badge-mob" class="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-400">
+                    ⚡ Sync: 0
+                </span>
+                <span id="conn-status-badge-mob" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-400">
+                    Connected
+                </span>
+            </div>
+        </div>
+
+        <!-- NDMA SACHET / ITU-T CAP LIVE ALERT BANNER -->
+        <div id="cap-user-alert-banner" class="bg-gradient-to-r from-rose-600 to-amber-600 text-white p-3.5 rounded-2xl shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border border-rose-500/40">
+            <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0 text-lg">
+                    🚨
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span id="cap-banner-sev" class="px-2 py-0.2 rounded-full bg-white text-rose-700 text-[10px] font-black tracking-wider uppercase">SEVERE ADVISORY</span>
+                        <span id="cap-banner-area" class="text-[10px] text-white/90 font-mono font-semibold">Sector 3-4 Pontoon</span>
+                    </div>
+                    <h3 id="cap-banner-headline" class="text-xs font-extrabold mt-0.5 leading-snug">Heavy Crowd Surge at Pontoon Bridge #4 (Ganga)</h3>
+                    <p id="cap-banner-headline-hi" class="text-[11px] text-amber-100 font-medium">पांटून पुल संख्या 4 पर अत्यधिक भीड़ - तुरंत मार्ग बदलें</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 w-full sm:w-auto shrink-0 justify-end">
+                <button onclick="speakCurrentCapAlert()" class="px-2.5 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition flex items-center gap-1.5 backdrop-blur-sm" title="Listen Audio Alert">
+                    <i class="fas fa-volume-high"></i>
+                    <span>सुनें / Listen</span>
+                </button>
+                <button onclick="dismissCapBanner()" class="text-white/70 hover:text-white px-2 py-1 text-sm">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- CLEAN SEVA-SYNC STYLE TAB PILLS (DIVIDED PROPERLY, NOT CRAMMED) -->
+        <div class="grid grid-cols-4 gap-2 bg-slate-200 dark:bg-slate-800/80 p-1 rounded-2xl shadow-inner">
+            <button onclick="switchTab('tab-emergency')" id="btn-tab-emergency"
+                class="tab-pill py-2 rounded-xl text-xs font-bold transition flex flex-col sm:flex-row items-center justify-center gap-1 bg-white dark:bg-[#111827] text-orange-600 dark:text-orange-400 shadow-sm">
+                <i class="fas fa-tower-broadcast text-sm"></i>
+                <span>Emergency</span>
+            </button>
+            <button onclick="switchTab('tab-navigation')" id="btn-tab-navigation"
+                class="tab-pill py-2 rounded-xl text-xs font-bold transition flex flex-col sm:flex-row items-center justify-center gap-1 text-slate-600 dark:text-slate-400 hover:text-slate-900">
+                <i class="fas fa-route text-sm"></i>
+                <span>Safe Route</span>
+            </button>
+            <button onclick="switchTab('tab-aid')" id="btn-tab-aid"
+                class="tab-pill py-2 rounded-xl text-xs font-bold transition flex flex-col sm:flex-row items-center justify-center gap-1 text-slate-600 dark:text-slate-400 hover:text-slate-900">
+                <i class="fas fa-boxes-packing text-sm"></i>
+                <span>Request Aid</span>
+            </button>
+            <button onclick="switchTab('tab-mesh')" id="btn-tab-mesh"
+                class="tab-pill py-2 rounded-xl text-xs font-bold transition flex flex-col sm:flex-row items-center justify-center gap-1 text-slate-600 dark:text-slate-400 hover:text-slate-900">
+                <i class="fas fa-network-wired text-sm text-cyan-500"></i>
+                <span>Mesh Radio</span>
+            </button>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 1: EMERGENCY SOS & VOICE GUARD -->
+        <!-- ============================================== -->
+        <div id="tab-emergency" class="tab-pane flex flex-col gap-4">
+            
+            <!-- BIG CLEAN SOS CARD -->
+            <div class="bg-white dark:bg-[#111827] p-6 rounded-3xl border border-slate-200 dark:border-slate-800 text-center flex flex-col items-center justify-center gap-4 shadow-sm">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-red-600 px-3 py-1 rounded-full bg-red-100 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60">
+                        Priority Distress Signal
+                    </span>
+                    <h2 class="text-xl font-black text-slate-900 dark:text-white mt-2" data-i18n="sos_title">Maha Kumbh SOS Emergency</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto mt-1">
+                        Transmits your live GPS position directly to Sector Police, Ghat QRT teams, and central command.
+                    </p>
+                </div>
+
+                <button onclick="sendSOS()" id="main-sos-btn"
+                    class="sos-pulse w-48 h-48 rounded-full bg-gradient-to-br from-red-500 to-red-700 text-white font-black flex flex-col items-center justify-center gap-2 shadow-xl active:scale-95 transition cursor-pointer border-4 border-white dark:border-slate-800">
+                    <i class="fas fa-bell text-5xl"></i>
+                    <span class="text-2xl font-black tracking-wider">SOS</span>
+                    <span class="text-[10px] uppercase font-bold text-red-100 tracking-wider">Tap to Alert</span>
+                </button>
+
+                <p class="text-[11px] text-slate-400 font-medium" data-i18n="mesh_note">Auto-switches to Offline Mesh Radio if internet is down</p>
+            </div>
+
+            <!-- VOICE GUARD & HEALTH CHECK-IN -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                
+                <!-- VOICE GUARD -->
+                <div class="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="p-3 rounded-2xl bg-red-50 dark:bg-red-950/40 text-red-600" id="voice-icon">
+                            <i class="fas fa-microphone-slash text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-1.5">
+                                <h3 class="font-bold text-sm text-slate-900 dark:text-white">Voice Guard SOS</h3>
+                                <span class="text-[9px] px-1.5 py-0.2 rounded bg-red-100 text-red-700 font-bold">AI</span>
+                            </div>
+                            <p class="text-xs text-slate-500" id="voice-status">Say "Help" or "Bachao"</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="voice-guard-checkbox" class="sr-only peer" onchange="toggleVoiceGuard(this)">
+                        <div class="w-12 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                    </label>
+                </div>
+
+                <!-- MEDICAL TRIAGE CARD -->
+                <div class="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between shadow-sm gap-2">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                            <i class="fas fa-user-doctor text-blue-600"></i> Health Triage
+                        </h3>
+                        <span class="text-[10px] text-slate-400">1-Tap Medical Aid</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="reportHealth('Minor')" class="bg-emerald-100 text-emerald-800 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-200 transition">🟢 Minor</button>
+                        <button onclick="reportHealth('Moderate')" class="bg-amber-100 text-amber-800 py-1.5 rounded-lg text-xs font-bold hover:bg-amber-200 transition">🟡 Moderate</button>
+                        <button onclick="reportHealth('Critical')" class="bg-red-100 text-red-800 py-1.5 rounded-lg text-xs font-bold hover:bg-red-200 transition">🔴 Critical</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- TACTICAL AUDIO SIREN & SPEECH SOS TOOLS -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- EMERGENCY AUDIBLE SIREN -->
+                <div class="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600" id="siren-icon">
+                            <i class="fas fa-bullhorn text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-900 dark:text-white">Loud Safety Siren</h3>
+                            <p class="text-xs text-slate-500" id="siren-status">Alert crowd & nearby police</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleEmergencySiren()" id="siren-toggle-btn"
+                        class="px-3.5 py-2 rounded-xl text-xs font-black transition bg-amber-500 hover:bg-amber-600 text-white shadow-sm flex items-center gap-1.5 cursor-pointer">
+                        <i class="fas fa-volume-high"></i>
+                        <span id="siren-btn-text">SIREN ON</span>
+                    </button>
+                </div>
+
+                <!-- 1-TAP HINDI/ENGLISH VOICE SOS -->
+                <div class="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="p-3 rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-600" id="voice-dictate-icon">
+                            <i class="fas fa-comment-dots text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-900 dark:text-white">बोलकर मदद मांगें</h3>
+                            <p class="text-xs text-slate-500" id="voice-dictate-status">Tap mic & speak emergency</p>
+                        </div>
+                    </div>
+                    <button onclick="startVoiceSosDictation()" id="voice-dictate-btn"
+                        class="px-3.5 py-2 rounded-xl text-xs font-black transition bg-purple-600 hover:bg-purple-700 text-white shadow-sm flex items-center gap-1.5 cursor-pointer">
+                        <i class="fas fa-microphone"></i>
+                        <span>बोलें / Speak</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- TACTICAL SMS FALLBACK -->
+            <button onclick="sendSMSBackup()"
+                class="w-full bg-slate-800 hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 text-white p-3.5 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition">
+                <i class="fas fa-comment-sms text-emerald-400"></i>
+                <span>Tactical SMS Fallback: Send Geo-Compressed SMS to Police (112)</span>
+            </button>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 2: WATERMARK-FREE SAFE ROUTE NAVIGATION -->
+        <!-- ============================================== -->
+        <div id="tab-navigation" class="tab-pane hidden flex flex-col gap-4">
+            <div class="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-3 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-person-shelter text-orange-600 text-base"></i>
+                        <h3 class="font-bold text-sm text-slate-900 dark:text-white">Kumbh Mela Stampede-Safe Corridor</h3>
+                    </div>
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
+                        GPS Active
+                    </span>
+                </div>
+
+                <!-- PONTOON & GHAT BOTTLENECK RADAR -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
+                    <div id="stat-sec-sangam" class="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800">
+                        <div class="text-[10px] text-slate-500">Sangam Nose</div>
+                        <div class="font-extrabold text-amber-600 dark:text-amber-400">85% Cap</div>
+                        <div class="text-[9px] text-slate-400">Stay in ropes</div>
+                    </div>
+                    <div id="stat-sec-pontoon3" class="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800">
+                        <div class="text-[10px] text-slate-500">Pontoon #3</div>
+                        <div class="font-extrabold text-rose-600 dark:text-rose-400 animate-pulse">4.1 ppl/m²</div>
+                        <div class="text-[9px] text-rose-500">High Surge</div>
+                    </div>
+                    <div id="stat-sec-pontoon4" class="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800">
+                        <div class="text-[10px] text-slate-500">Pontoon #4</div>
+                        <div class="font-extrabold text-purple-600 dark:text-purple-400">DIVERTED</div>
+                        <div class="text-[9px] text-purple-500">Use South Ramp</div>
+                    </div>
+                    <div id="stat-sec-arail" class="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800">
+                        <div class="text-[10px] text-slate-500">Arail Ghat</div>
+                        <div class="font-extrabold text-emerald-600 dark:text-emerald-400">CLEAR 🟢</div>
+                        <div class="text-[9px] text-emerald-600">Fast Ingress</div>
+                    </div>
+                </div>
+
+                <!-- WATERMARK-FREE LEAFLET MAP -->
+                <div class="relative w-full h-[320px] rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+                    <div id="map"></div>
+                </div>
+
+                <button onclick="findSafeZone()"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm py-3.5 rounded-xl shadow-sm active:scale-95 transition flex items-center justify-center gap-2">
+                    <i class="fas fa-diamond-turn-right"></i>
+                    <span>CALCULATE ROUTE TO ASSIGNED SAFE GHAT</span>
+                </button>
+
+                <p class="text-[11px] text-slate-500 text-center">
+                    Intelligently routes even & odd Pilgrim IDs to alternate exit corridors (Sangam North vs Arail South) to prevent bottlenecks.
+                </p>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 3: REQUEST EMERGENCY AID & SUPPLIES -->
+        <!-- ============================================== -->
+        <div id="tab-aid" class="tab-pane hidden flex flex-col gap-4">
+            <div class="bg-white dark:bg-[#111827] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-4">
+                    <div>
+                        <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wide">Request Emergency Field Supplies</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Items are dispatched directly from the central command depot to your location.</p>
+                    </div>
+                    <div class="p-2 rounded-xl bg-orange-100 dark:bg-orange-500/20 text-orange-600 text-base">
+                        <i class="fas fa-hand-holding-heart"></i>
+                    </div>
+                </div>
+
+                <!-- 1-TAP AID BUTTONS -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <button onclick="quickRequestAid('Drinking Water & ORS (पेयजल)', 2, this)"
+                        class="p-3.5 rounded-2xl bg-blue-50 dark:bg-slate-800/60 hover:bg-blue-100 dark:hover:bg-slate-800 border border-blue-200 dark:border-slate-700 flex flex-col items-center text-center gap-1.5 transition active:scale-95 cursor-pointer">
+                        <i class="fas fa-bottle-water text-2xl text-blue-500"></i>
+                        <span class="text-xs font-bold text-slate-800 dark:text-white" data-i18n="water">Drinking Water</span>
+                        <span class="text-[10px] text-slate-500">पेयजल / ओआरएस</span>
+                    </button>
+
+                    <button onclick="quickRequestAid('Mahaprasad & Food (अन्न व भोजन)', 2, this)"
+                        class="p-3.5 rounded-2xl bg-amber-50 dark:bg-slate-800/60 hover:bg-amber-100 dark:hover:bg-slate-800 border border-amber-200 dark:border-slate-700 flex flex-col items-center text-center gap-1.5 transition active:scale-95 cursor-pointer">
+                        <i class="fas fa-bowl-rice text-2xl text-amber-500"></i>
+                        <span class="text-xs font-bold text-slate-800 dark:text-white" data-i18n="food">Food / Prasad</span>
+                        <span class="text-[10px] text-slate-500">अन्न / महाप्रसाद</span>
+                    </button>
+
+                    <button onclick="quickRequestAid('Emergency First Aid Kit (दवा किट)', 1, this)"
+                        class="p-3.5 rounded-2xl bg-emerald-50 dark:bg-slate-800/60 hover:bg-emerald-100 dark:hover:bg-slate-800 border border-emerald-200 dark:border-slate-700 flex flex-col items-center text-center gap-1.5 transition active:scale-95 cursor-pointer">
+                        <i class="fas fa-kit-medical text-2xl text-emerald-500"></i>
+                        <span class="text-xs font-bold text-slate-800 dark:text-white" data-i18n="firstaid">Medical Kit</span>
+                        <span class="text-[10px] text-slate-500">दवा / प्राथमिक उपचार</span>
+                    </button>
+
+                    <button onclick="quickRequestAid('Warm Blanket (ऊनी कंबल)', 1, this)"
+                        class="p-3.5 rounded-2xl bg-purple-50 dark:bg-slate-800/60 hover:bg-purple-100 dark:hover:bg-slate-800 border border-purple-200 dark:border-slate-700 flex flex-col items-center text-center gap-1.5 transition active:scale-95 cursor-pointer">
+                        <i class="fas fa-rug text-2xl text-purple-500"></i>
+                        <span class="text-xs font-bold text-slate-800 dark:text-white" data-i18n="blanket">Warm Blanket</span>
+                        <span class="text-[10px] text-slate-500">शीत निवारक कंबल</span>
+                    </button>
+
+                    <button onclick="quickRequestAid('Life Jacket / Ghat Boat (लाइफ जैकेट)', 1, this)"
+                        class="p-3.5 rounded-2xl bg-cyan-50 dark:bg-slate-800/60 hover:bg-cyan-100 dark:hover:bg-slate-800 border border-cyan-200 dark:border-slate-700 flex flex-col items-center text-center gap-1.5 transition active:scale-95 cursor-pointer">
+                        <i class="fas fa-life-ring text-2xl text-cyan-500"></i>
+                        <span class="text-xs font-bold text-slate-800 dark:text-white" data-i18n="jacket">Life Jacket</span>
+                        <span class="text-[10px] text-slate-500">घाट लाइफ जैकेट</span>
+                    </button>
+
+                    <button onclick="reportHealth('Critical')"
+                        class="p-3.5 rounded-2xl bg-red-50 dark:bg-slate-800/60 hover:bg-red-100 dark:hover:bg-slate-800 border border-red-200 dark:border-slate-700 flex flex-col items-center text-center gap-1.5 transition active:scale-95 cursor-pointer">
+                        <i class="fas fa-truck-medical text-2xl text-red-500"></i>
+                        <span class="text-xs font-bold text-slate-800 dark:text-white">Call Ambulance</span>
+                        <span class="text-[10px] text-slate-500">आपातकालीन एम्बुलेंस</span>
+                    </button>
+                </div>
+
+                <div class="mt-5 border-t border-slate-100 dark:border-slate-800 pt-3">
+                    <h4 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-2">Your Active Request Status:</h4>
+                    <div id="pilgrim-requests-log" class="space-y-2 text-xs">
+                        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 text-slate-500 text-center" id="no-my-reqs">
+                            No active requests. Tap an item above to dispatch supplies to your GPS point.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 4: OFFLINE MESH NETWORK (WORKABLE P2P CONSOLE) -->
+        <!-- ============================================== -->
+        <div id="tab-mesh" class="tab-pane hidden flex flex-col gap-4">
+            
+            <div class="bg-white dark:bg-[#111827] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-4">
+                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="p-2.5 rounded-2xl bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600">
+                            <i class="fas fa-network-wired text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wide">Offline P2P Mesh Network</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Direct peer-to-peer radio relay without telecom or internet connectivity.</p>
+                        </div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full text-xs font-bold font-mono bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-400">
+                        P2P Active
+                    </span>
+                </div>
+
+                <!-- MESH MODE TOGGLE -->
+                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-900 dark:text-white">Activate Pure Offline Mesh Radio</h4>
+                        <p class="text-[11px] text-slate-500">Forces device into zero-WAN local relay mode (BroadcastChannel + Local Hop)</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="mesh-mode-toggle" class="sr-only peer" onchange="toggleMeshRadio(this)">
+                        <div class="w-12 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600"></div>
+                    </label>
+                </div>
+
+                <!-- MESH FIELD TEST ACTION -->
+                <button onclick="sendMeshPingPacket()"
+                    class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs py-3 rounded-xl shadow-sm flex items-center justify-center gap-2 transition active:scale-95">
+                    <i class="fas fa-tower-broadcast"></i>
+                    <span>BROADCAST TEST MESH PACKET TO NEARBY PHONES</span>
+                </button>
+
+                <!-- REAL-TIME TACTICAL TERMINAL -->
+                <div class="bg-slate-900 text-emerald-400 p-4 rounded-xl border border-slate-800 font-mono text-[11px] space-y-1.5 h-36 overflow-y-auto custom-scroll" id="mesh-user-log">
+                    <div class="text-slate-500">&gt;&gt; Suraksha Mesh Protocol v2.0 Initialized</div>
+                    <div class="text-slate-500">&gt;&gt; Listening on P2P Channel 'suraksha_kumbh_mesh'</div>
+                    <div class="text-cyan-400">&gt;&gt; Ready to hop packets across nearby devices without internet</div>
+                </div>
+            </div>
+
+            <!-- OFFLINE TACTICAL WALKIE-TALKIE & MESH MESSENGER -->
+            <div id="user-mesh-chat-container"></div>
+
+            <!-- ADDITIONAL SEVADAR & RECOGNITION BUTTONS -->
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="document.getElementById('lost-modal').classList.remove('hidden')"
+                    class="bg-white dark:bg-[#111827] p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white flex items-center gap-2.5 shadow-sm text-xs font-bold hover:bg-slate-50 transition">
+                    <i class="fas fa-user-friends text-purple-600"></i>
+                    <span>Report Missing Person</span>
+                </button>
+
+                <button onclick="openScannerModal()"
+                    class="bg-white dark:bg-[#111827] p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white flex items-center gap-2.5 shadow-sm text-xs font-bold hover:bg-slate-50 transition">
+                    <i class="fas fa-camera text-pink-600"></i>
+                    <span>AI Face Scanner</span>
+                </button>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- ============================================== -->
+    <!-- MODALS SECTION -->
+    <!-- ============================================== -->
+
+    <!-- MEDICAL MODAL -->
+    <div id="medical-modal" class="hidden fixed inset-0 z-[1500] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-fade-in border border-slate-200 dark:border-slate-800">
+            <h2 class="text-lg font-black mb-1 text-slate-900 dark:text-white flex items-center gap-2">
+                <i class="fas fa-heart-pulse text-red-600"></i> Medical Triage Report
+            </h2>
+            <p class="text-xs text-slate-500 mb-4">Severity: <span id="med-severity-display" class="font-black text-red-600">Critical</span></p>
+
+            <form onsubmit="submitMedicalReport(event)" class="space-y-3.5">
+                <input type="hidden" id="med-severity" value="Critical">
+                <div>
+                    <label class="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Condition</label>
+                    <select id="med-type" class="w-full p-2.5 border rounded-xl bg-slate-50 dark:bg-slate-800 text-xs font-semibold focus:outline-none">
+                        <option value="Severe Breathlessness / Chest Pain">Severe Breathlessness / Chest Pain</option>
+                        <option value="Fracture / Sprain / Trampling">Fracture / Sprain / Trampling</option>
+                        <option value="Heatstroke / Dehydration / Fainting">Heatstroke / Dehydration / Fainting</option>
+                        <option value="Drowning / Water Ingestion">Drowning / Water Ingestion</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-2 p-2 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200">
+                    <input type="checkbox" id="med-conscious" class="w-4 h-4 accent-red-600 rounded">
+                    <label for="med-conscious" class="text-xs font-bold text-red-800 dark:text-red-300">Pilgrim is UNCONSCIOUS (बेहोश)</label>
+                </div>
+
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="document.getElementById('medical-modal').classList.add('hidden')"
+                        class="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 py-2.5 rounded-xl font-bold text-xs">Cancel</button>
+                    <button type="submit"
+                        class="flex-1 bg-red-600 hover:bg-red-500 text-white py-2.5 rounded-xl font-bold text-xs shadow">
+                        Dispatch Help
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- LOST & FOUND MODAL -->
+    <div id="lost-modal" class="hidden fixed inset-0 z-[1500] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800">
+            <h2 class="text-lg font-black text-purple-900 dark:text-purple-300 mb-3">Report Missing Pilgrim</h2>
+            <form onsubmit="submitLostReport(event)" class="space-y-3">
+                <input type="text" id="p-name" required placeholder="Full Name of Missing Person"
+                    class="w-full p-2.5 border rounded-xl bg-slate-50 dark:bg-slate-800 text-xs font-medium">
+                <input type="number" id="p-age" required placeholder="Age (उम्र)"
+                    class="w-full p-2.5 border rounded-xl bg-slate-50 dark:bg-slate-800 text-xs font-medium">
+                <input type="tel" id="p-contact" required placeholder="Contact Phone"
+                    class="w-full p-2.5 border rounded-xl bg-slate-50 dark:bg-slate-800 text-xs font-medium">
+                <div>
+                    <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">Face Photo for AI Scanner:</label>
+                    <input type="file" id="p-image" accept="image/*" required class="text-xs text-slate-500 w-full">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="document.getElementById('lost-modal').classList.add('hidden')"
+                        class="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 py-2.5 rounded-xl font-bold text-xs">Cancel</button>
+                    <button type="submit"
+                        class="flex-1 bg-purple-600 hover:bg-purple-500 text-white py-2.5 rounded-xl font-bold text-xs shadow">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- AI FACE SCANNER MODAL -->
+    <div id="scanner-modal" class="hidden fixed inset-0 z-[2500] bg-black/90 flex flex-col items-center justify-center p-4 backdrop-blur-md">
+        <div class="relative w-full max-w-md bg-slate-900 rounded-3xl overflow-hidden border border-slate-700 shadow-2xl p-4 flex flex-col items-center">
+            <button onclick="closeScannerModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl z-20">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <h3 class="text-sm font-bold text-white uppercase mb-1 flex items-center gap-2">
+                <i class="fas fa-camera text-pink-400"></i> AI Missing Person Face Matcher
+            </h3>
+            <p class="text-[10px] text-slate-400 mb-3" id="scan-status">Initializing Camera...</p>
+
+            <div class="relative w-full aspect-video bg-black rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center">
+                <video id="scanner-video" autoplay playsinline muted class="w-full h-full object-cover"></video>
+                <canvas id="scanner-canvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+            </div>
+
+            <div id="scan-result" class="hidden mt-3 w-full p-3 rounded-2xl bg-emerald-950/80 border border-emerald-500/50 flex items-center justify-between text-xs animate-fade-in">
+                <div class="flex items-center gap-2.5">
+                    <img id="match-img" src="" class="w-10 h-10 rounded-xl object-cover border border-emerald-400">
+                    <div>
+                        <div class="font-bold text-emerald-300">MATCH IDENTIFIED!</div>
+                        <div class="text-[10px] text-slate-200" id="match-name">...</div>
+                    </div>
+                </div>
+                <button onclick="notifyMatch()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg shadow">
+                    Notify Police
+                </button>
+            </div>
+
+            <div class="flex items-center gap-3 mt-4">
+                <button onclick="toggleScanner(true)" id="btn-start-scan" class="bg-pink-600 hover:bg-pink-500 text-white text-xs font-bold px-4 py-2 rounded-xl">Start Scan</button>
+                <button onclick="toggleScanner(false)" id="btn-stop-scan" class="hidden bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl">Stop</button>
+                <button onclick="flipCamera()" class="bg-slate-800 text-slate-200 text-xs font-bold p-2.5 rounded-xl border border-slate-700">
+                    <i class="fas fa-camera-rotate"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VOICE SOS COUNTDOWN OVERLAY -->
+    <div id="voice-overlay"
+        class="hidden fixed inset-0 z-[3100] bg-red-700/95 flex flex-col items-center justify-center p-6 text-center backdrop-blur-md">
+        <div class="w-24 h-24 rounded-full bg-white/10 border-2 border-white/20 flex items-center justify-center mb-6 animate-pulse">
+            <i class="fas fa-microphone text-5xl text-white"></i>
+        </div>
+        <h2 class="text-2xl font-black text-white mb-1 uppercase tracking-wide">Distress Voice Detected</h2>
+        <p class="text-sm text-red-100 mb-6">Dispatching emergency SOS in <span id="voice-timer" class="font-mono font-black text-4xl text-amber-300">5</span> seconds...</p>
+        <button onclick="cancelVoiceSOS()"
+            class="bg-white text-red-700 px-8 py-4 rounded-2xl font-black text-base shadow-2xl hover:scale-105 active:scale-95 transition flex items-center gap-2">
+            <i class="fas fa-times-circle"></i> CANCEL SOS
+        </button>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+        // Fallback dummy socket if socket.io is unavailable
+        if (typeof io === 'undefined') {
+            window.io = () => ({ on: () => {}, emit: () => {}, connected: false });
+        }
+        // --- 1. THEME SUPPORT (LIGHT THEME MAIN) ---
+        function initTheme() {
+            const savedTheme = localStorage.getItem('suraksha_theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+        initTheme();
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('suraksha_theme', isDark ? 'dark' : 'light');
+            updateUserMapTiles(isDark);
+        }
+
+        // --- 2. PILGRIM SESSION ID ---
+        let savedId = localStorage.getItem('suraksha_kumbh_id');
+        if (!savedId) {
+            const num = Math.floor(Math.random() * 9000) + 1000;
+            savedId = 'PILGRIM-' + num;
+            localStorage.setItem('suraksha_kumbh_id', savedId);
+        }
+        const USER_ID = savedId;
+        const MESH_NODE_ID = 'NODE-' + USER_ID;
+
+        const idDisplay = document.getElementById('user-id-display');
+        const idDisplayMobile = document.getElementById('user-id-display-mobile');
+        if (idDisplay) idDisplay.innerText = USER_ID;
+        if (idDisplayMobile) idDisplayMobile.innerText = USER_ID;
+
+        // --- 3. TOAST NOTIFICATIONS ---
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            const bg = type === 'success' ? 'bg-emerald-600' : (type === 'error' ? 'bg-red-600' : 'bg-slate-900');
+            toast.className = `${bg} text-white text-xs font-bold px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2.5 transition pointer-events-auto`;
+            toast.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle text-emerald-300' : (type === 'error' ? 'fa-exclamation-circle text-red-300' : 'fa-info-circle text-orange-400')}"></i>
+                <span class="flex-grow">${message}</span>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'transition-opacity');
+                setTimeout(() => toast.remove(), 400);
+            }, 4500);
+        }
+
+        // --- 4. TAB NAVIGATION ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById(tabId);
+            if (target) target.classList.remove('hidden');
+
+            document.querySelectorAll('.tab-pill').forEach(btn => {
+                btn.className = "tab-pill py-2 rounded-xl text-xs font-bold transition flex flex-col sm:flex-row items-center justify-center gap-1 text-slate-600 dark:text-slate-400 hover:text-slate-900";
+            });
+
+            const activeBtn = document.getElementById(tabId.replace('tab-', 'btn-tab-'));
+            if (activeBtn) {
+                activeBtn.className = "tab-pill py-2 rounded-xl text-xs font-bold transition flex flex-col sm:flex-row items-center justify-center gap-1 bg-white dark:bg-[#111827] text-orange-600 dark:text-orange-400 shadow-sm";
+            }
+
+            if (tabId === 'tab-navigation' && map) {
+                setTimeout(() => map.invalidateSize(), 150);
+            }
+        }
+
+        // --- 5. TRUE OFFLINE MESH NETWORK (ZERO INTERNET P2P) ---
+        const meshChannel = new BroadcastChannel('suraksha_kumbh_mesh');
+        const handledMeshPackets = new Set();
+        let isPureMeshMode = false;
+
+        meshChannel.onmessage = (event) => {
+            handleIncomingMeshPacket(event.data);
+        };
+
+        function toggleMeshRadio(checkbox) {
+            isPureMeshMode = checkbox.checked;
+            if (isPureMeshMode) {
+                showToast("📡 Offline Mesh Radio Active. Packets will route via peer devices.", 'info');
+                logUserMeshTerminal(">> P2P Mesh Radio Active (Zero Internet Mode)");
+            } else {
+                showToast("🌐 Switched to Standard Online Sync.", 'info');
+                logUserMeshTerminal(">> Standard Hybrid Sync Restored");
+            }
+        }
+
+        function handleIncomingMeshPacket(packet) {
+            if (!packet || !packet.packetId) return;
+            if (handledMeshPackets.has(packet.packetId)) return;
+            handledMeshPackets.add(packet.packetId);
+
+            logUserMeshTerminal(`[HOP ${packet.hops}] RX: [${packet.type}] from ${packet.originNode}`);
+
+            if (packet.type === 'MESH_ACK' && packet.targetNode === USER_ID) {
+                showToast("✅ Response received via Mesh Network!", 'success');
+                logUserMeshTerminal(`>> Command Gateway ACK received via ${packet.relayPath.length} hops!`);
+            }
+
+            // Multi-hop relay: forward packet if not exceeded TTL (5 hops)
+            if (packet.hops < 5 && packet.originNode !== USER_ID) {
+                const forwardPacket = {
+                    ...packet,
+                    hops: packet.hops + 1,
+                    relayPath: [...packet.relayPath, USER_ID]
+                };
+                meshChannel.postMessage(forwardPacket);
+                logUserMeshTerminal(`>> Forwarded packet ${packet.packetId} (Hop ${forwardPacket.hops})`);
+            }
+        }
+
+        function sendMeshPingPacket() {
+            const packet = {
+                packetId: 'PING-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                originNode: USER_ID,
+                type: 'MESH_PING',
+                payload: 'Pilgrim Node Ping Signal',
+                location: `${startLoc[0]}, ${startLoc[1]}`,
+                hops: 0,
+                relayPath: [USER_ID],
+                timestamp: Date.now()
+            };
+            meshChannel.postMessage(packet);
+            socket.emit('MESH_PACKET', packet);
+            logUserMeshTerminal(`>> TX [PING]: Broadcasted test packet to nearby peers`);
+            showToast("📡 Test packet broadcasted into Mesh Network!", 'success');
+        }
+
+        function logUserMeshTerminal(msg) {
+            const terminal = document.getElementById('mesh-user-log');
+            if (!terminal) return;
+            const line = document.createElement('div');
+            line.innerText = msg;
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        // --- 6. SOCKET.IO INTEGRATION ---
+        const socket = io();
+        socket.emit('identify', { type: 'USER', userId: USER_ID, nodeId: MESH_NODE_ID });
+
+        socket.on('SOS_ACKNOWLEDGE', (data) => {
+            if (data.userId === USER_ID) {
+                showToast("🚨 HELP DISPATCHED! Ghat Rescue Team inbound to your coordinates.", 'success');
+                const btn = document.getElementById('main-sos-btn');
+                if (btn) {
+                    btn.className = "w-48 h-48 rounded-full bg-emerald-600 text-white font-black flex flex-col items-center justify-center gap-2 shadow-xl animate-pulse";
+                    btn.innerHTML = '<i class="fas fa-check text-4xl"></i><span class="text-lg">RESCUE INBOUND</span>';
+                }
+            }
+        });
+
+        socket.on('SOS_RESOLVE', (data) => {
+            if (data.userId === USER_ID) {
+                showToast("✅ Emergency resolved by Command Center.", 'success');
+                const btn = document.getElementById('main-sos-btn');
+                if (btn) {
+                    btn.className = "sos-pulse w-48 h-48 rounded-full bg-gradient-to-br from-red-500 to-red-700 text-white font-black flex flex-col items-center justify-center gap-2 shadow-xl";
+                    btn.innerHTML = '<i class="fas fa-bell text-5xl"></i><span class="text-2xl font-black tracking-wider">SOS</span>';
+                }
+            }
+        });
+
+        socket.on('RESOURCE_DISPATCHED', (data) => {
+            if (data.targetUserId === USER_ID || !data.targetUserId) {
+                showToast(`🚚 Relief Dispatched: ${data.quantity || ''}x ${data.resourceName || 'Supplies'} sent to your location!`, 'success');
+                addMyRequestToLog({
+                    item: data.resourceName || 'Relief Supplies',
+                    qty: data.quantity || 1,
+                    status: 'Dispatched 🚚'
+                });
+            }
+        });
+
+        socket.on('DISASTER_ALERT', (data) => {
+            const overlay = document.getElementById('user-disaster-alert');
+            const alertType = document.getElementById('user-alert-type');
+            const alertMsg = document.getElementById('user-alert-msg');
+            const statusBanner = document.getElementById('status-banner');
+            const statusText = document.getElementById('status-banner-text');
+
+            if (alertType) alertType.innerText = (data.alertType || 'EMERGENCY') + ' ALERT';
+            if (alertMsg) alertMsg.innerText = `Danger in ${data.zone || 'Mela Area'}. Move towards designated safe Ghat zones.`;
+            if (overlay) overlay.classList.remove('hidden');
+
+            if (statusBanner) statusBanner.className = "bg-red-600 text-white px-4 py-1.5 text-center font-bold text-xs shadow-sm animate-pulse";
+            if (statusText) statusText.innerText = `STATUS: DANGER (${data.alertType} IN ${data.zone})`;
+        });
+
+        socket.on('DISASTER_CLEAR', () => {
+            const overlay = document.getElementById('user-disaster-alert');
+            if (overlay) overlay.classList.add('hidden');
+            const statusBanner = document.getElementById('status-banner');
+            const statusText = document.getElementById('status-banner-text');
+            if (statusBanner) statusBanner.className = "bg-emerald-600 text-white px-4 py-1.5 text-center font-bold text-xs shadow-sm";
+            if (statusText) statusText.innerText = "STATUS: AREA SAFE & ALL GHATS OPERATIONAL";
+            showToast("✅ Area is marked safe.", 'success');
+        });
+
+        function dismissUserAlert() {
+            document.getElementById('user-disaster-alert')?.classList.add('hidden');
+        }
+
+        // --- 7. LEAFLET MAP (WATERMARK-FREE) ---
+        let map;
+        let userTileLayer;
+        let startLoc = [25.4300, 81.8800]; // Triveni Sangam, Prayagraj
+        let userMarker;
+        let routeLayer;
+
+        function initPilgrimMap() {
+            if (map) return;
+            const container = document.getElementById('map');
+            if (!container) return;
+
+            map = L.map('map', {
+                center: startLoc,
+                zoom: 14,
+                zoomControl: true
+            });
+
+            const isDark = document.documentElement.classList.contains('dark');
+            updateUserMapTiles(isDark);
+
+            userMarker = L.marker(startLoc).addTo(map).bindPopup("<b>You are here (आप यहाँ हैं)</b><br>Triveni Sangam Area").openPopup();
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        startLoc = [pos.coords.latitude, pos.coords.longitude];
+                        if (userMarker) userMarker.setLatLng(startLoc);
+                        map.setView(startLoc, 15);
+                        sendHeartbeat();
+                    },
+                    (err) => {
+                        console.warn("Using Sangam default coordinates:", err.message);
+                    },
+                    { enableHighAccuracy: false, timeout: 8000 }
+                );
+            }
+
+            setInterval(sendHeartbeat, 6000);
+        }
+
+        function updateUserMapTiles(isDark) {
+            if (!map) return;
+            if (userTileLayer) map.removeLayer(userTileLayer);
+
+            const tileUrl = isDark
+                ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                : 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
+
+            userTileLayer = L.tileLayer(tileUrl, {
+                attribution: '&copy; Esri & OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initPilgrimMap);
+        } else {
+            initPilgrimMap();
+        }
+
+        function sendHeartbeat() {
+            socket.emit('LOCATION_UPDATE', {
+                userId: USER_ID,
+                type: 'LOCATION_UPDATE',
+                location: `${startLoc[0]}, ${startLoc[1]}`,
+                time: new Date().toLocaleTimeString()
+            });
+        }
+
+        // --- 8. SOS DISTRESS SIGNAL (HYBRID MESH + SOCKET + OFFLINE QUEUE) ---
+        function sendSOS(customDetails) {
+            const desc = customDetails || 'Emergency SOS Signal Triggered';
+            const sosPacket = {
+                packetId: 'SOS-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                originNode: USER_ID,
+                type: 'SOS',
+                payload: desc,
+                location: `${startLoc[0]}, ${startLoc[1]}`,
+                hops: 0,
+                relayPath: [USER_ID],
+                timestamp: Date.now()
+            };
+
+            const sosPayload = {
+                userId: USER_ID,
+                type: 'SOS',
+                details: desc,
+                location: `${startLoc[0]}, ${startLoc[1]}`,
+                time: new Date().toLocaleTimeString()
+            };
+
+            // Always broadcast into local Mesh Radio (works with 0% internet)
+            if (typeof meshChannel !== 'undefined') {
+                meshChannel.postMessage(sosPacket);
+                logUserMeshTerminal(`>> TX [SOS]: Relayed distress packet ${sosPacket.packetId} into mesh`);
+            }
+
+            // If socket is connected, emit directly; otherwise, save to offline IndexedDB store
+            if (typeof socket !== 'undefined' && socket.connected && !isPureMeshMode) {
+                socket.emit('SOS', sosPayload);
+            } else {
+                if (typeof queueOfflineEvent === 'function') {
+                    queueOfflineEvent('SOS', sosPayload);
+                }
+            }
+
+            showToast("🚨 SOS TRANSMITTED! Command Center and Ghat Police alerted.", 'error');
+            const banner = document.getElementById('status-banner');
+            const text = document.getElementById('status-banner-text');
+            if (banner) banner.className = "bg-red-600 text-white px-4 py-1.5 text-center font-bold text-xs shadow-sm animate-pulse";
+            if (text) text.innerText = "STATUS: YOUR SOS IS CURRENTLY ACTIVE";
+        }
+
+        // --- 9. VOICE GUARD SOS ---
+        let recognition;
+        let voiceTimerInterval;
+        let voiceActive = false;
+
+        async function toggleVoiceGuard(checkbox) {
+            const status = document.getElementById('voice-status');
+            const icon = document.getElementById('voice-icon');
+
+            if (checkbox.checked) {
+                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                    showToast("Speech recognition not supported in this browser. Please use Chrome.", 'error');
+                    checkbox.checked = false;
+                    return;
+                }
+
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    stream.getTracks().forEach(t => t.stop());
+
+                    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    recognition = new SpeechRec();
+                    recognition.continuous = true;
+                    recognition.interimResults = false;
+                    recognition.lang = 'hi-IN';
+
+                    recognition.onstart = () => {
+                        if (status) status.innerText = "Listening: Say 'Help' or 'Bachao'";
+                        if (icon) icon.className = "p-3 rounded-2xl bg-red-100 text-red-600 animate-pulse";
+                    };
+
+                    recognition.onresult = (evt) => {
+                        const transcript = evt.results[evt.results.length - 1][0].transcript.trim().toLowerCase();
+                        if (transcript.includes('help') || transcript.includes('bachao') || transcript.includes('emergency')) {
+                            triggerVoiceSOS();
+                        }
+                    };
+
+                    recognition.onend = () => {
+                        if (checkbox.checked) {
+                            setTimeout(() => { try { recognition.start(); } catch (e) {} }, 300);
+                        }
+                    };
+
+                    recognition.start();
+                    showToast("🎤 Voice Guard Activated. Listening for 'Help' or 'Bachao'", 'success');
+
+                } catch (e) {
+                    showToast("Microphone permission required for Voice Guard.", 'error');
+                    checkbox.checked = false;
+                }
+            } else {
+                if (recognition) recognition.stop();
+                if (status) status.innerText = "Inactive";
+                if (icon) icon.className = "p-3 rounded-2xl bg-red-50 text-red-600";
+            }
+        }
+
+        function triggerVoiceSOS() {
+            if (voiceActive) return;
+            voiceActive = true;
+
+            const overlay = document.getElementById('voice-overlay');
+            const timerEl = document.getElementById('voice-timer');
+            if (overlay) overlay.classList.remove('hidden');
+
+            let count = 5;
+            if (timerEl) timerEl.innerText = count;
+
+            voiceTimerInterval = setInterval(() => {
+                count--;
+                if (timerEl) timerEl.innerText = count;
+                if (count <= 0) {
+                    clearInterval(voiceTimerInterval);
+                    if (overlay) overlay.classList.add('hidden');
+                    sendSOS();
+                    voiceActive = false;
+                }
+            }, 1000);
+        }
+
+        function cancelVoiceSOS() {
+            clearInterval(voiceTimerInterval);
+            const overlay = document.getElementById('voice-overlay');
+            if (overlay) overlay.classList.add('hidden');
+            voiceActive = false;
+            showToast("Voice SOS cancelled.", 'info');
+        }
+
+        function sendSMSBackup() {
+            const body = `KUMBH SOS! Need immediate help. ID: ${USER_ID}. Location: ${startLoc[0]}, ${startLoc[1]}. Sector: Sangam.`;
+            window.open(`sms:112?body=${encodeURIComponent(body)}`, '_blank');
+        }
+
+        // --- 10. STAMPEDE-PREVENTION ROUTING ---
+        async function findSafeZone() {
+            if (!map) initPilgrimMap();
+
+            const idNum = parseInt(USER_ID.replace(/\D/g, '')) || 0;
+            const isEven = idNum % 2 === 0;
+
+            const safeLocA = [startLoc[0] + 0.012, startLoc[1] + 0.012];
+            const safeLocB = [startLoc[0] + 0.012, startLoc[1] - 0.012];
+
+            const targetLoc = isEven ? safeLocA : safeLocB;
+            const zoneName = isEven ? "Safe Zone Corridor A (Sangam North)" : "Safe Zone Corridor B (Arail South)";
+
+            if (routeLayer) map.removeLayer(routeLayer);
+
+            L.marker(safeLocA, { icon: L.divIcon({ html: '🏥', className: 'text-2xl' }) }).addTo(map).bindPopup("Safe Zone A");
+            L.marker(safeLocB, { icon: L.divIcon({ html: '⛺', className: 'text-2xl' }) }).addTo(map).bindPopup("Safe Zone B");
+
+            const url = `https://router.project-osrm.org/route/v1/driving/${startLoc[1]},${startLoc[0]};${targetLoc[1]},${targetLoc[0]}?overview=full&geometries=geojson`;
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.code === 'Ok') {
+                    routeLayer = L.geoJSON(data.routes[0].geometry, {
+                        style: { color: isEven ? '#2563eb' : '#9333ea', weight: 6, opacity: 0.85 }
+                    }).addTo(map);
+                    map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] });
+                    showToast(`🛡️ Assigned: ${zoneName}. Route optimized to prevent bottlenecks.`, 'success');
+                } else {
+                    throw new Error("Route unavailable");
+                }
+            } catch (err) {
+                routeLayer = L.polyline([startLoc, targetLoc], { color: 'red', weight: 3, dashArray: '5,5' }).addTo(map);
+                map.fitBounds([startLoc, targetLoc]);
+                showToast(`Showing direct direction to: ${zoneName}`, 'info');
+            }
+        }
+
+        // --- 11. QUICK AID REQUESTS ---
+        function quickRequestAid(itemName, qty = 1, btnEl = null) {
+            if (btnEl) {
+                const prev = btnEl.innerHTML;
+                btnEl.innerHTML = '<i class="fas fa-check text-2xl text-emerald-500 animate-bounce"></i><span class="text-xs font-bold text-emerald-600">Dispatched!</span>';
+                btnEl.disabled = true;
+                setTimeout(() => { btnEl.innerHTML = prev; btnEl.disabled = false; }, 2500);
+            }
+            const reqData = {
+                userId: USER_ID,
+                type: 'HELP_REQUEST',
+                details: itemName,
+                quantity: qty,
+                location: `${startLoc[0]}, ${startLoc[1]}`,
+                time: new Date().toLocaleTimeString()
+            };
+
+            // Mesh packet broadcast (Zero-internet P2P)
+            const meshPacket = {
+                packetId: 'AID-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                originNode: USER_ID,
+                type: 'HELP_REQUEST',
+                payload: `${qty}x ${itemName}`,
+                location: reqData.location,
+                hops: 0,
+                relayPath: [USER_ID],
+                timestamp: Date.now()
+            };
+            if (typeof meshChannel !== 'undefined') {
+                meshChannel.postMessage(meshPacket);
+                logUserMeshTerminal(`>> TX [AID REQ]: Relayed ${qty}x ${itemName} via mesh`);
+            }
+
+            if (typeof socket !== 'undefined' && socket.connected && !isPureMeshMode) {
+                socket.emit('HELP_REQUEST', reqData);
+            } else {
+                if (typeof queueOfflineEvent === 'function') {
+                    queueOfflineEvent('HELP_REQUEST', reqData);
+                }
+            }
+
+            showToast(`📦 Requested ${qty}x ${itemName}. Sent to Depot!`, 'success');
+            addMyRequestToLog({ item: itemName, qty: qty, status: 'Sent to Depot 🚚' });
+        }
+
+        function addMyRequestToLog(itemData) {
+            const container = document.getElementById('pilgrim-requests-log');
+            const noMsg = document.getElementById('no-my-reqs');
+            if (noMsg) noMsg.style.display = 'none';
+
+            const card = document.createElement('div');
+            card.className = "p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs";
+            card.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-box text-orange-500"></i>
+                    <span class="font-bold text-slate-800 dark:text-white">${itemData.qty}x ${itemData.item}</span>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400">${itemData.status}</span>
+            `;
+            container.prepend(card);
+        }
+
+        // --- 12. MEDICAL REPORT ---
+        function reportHealth(severity) {
+            const modal = document.getElementById('medical-modal');
+            const display = document.getElementById('med-severity-display');
+            const hidden = document.getElementById('med-severity');
+            if (display) display.innerText = severity;
+            if (hidden) hidden.value = severity;
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function submitMedicalReport(e) {
+            e.preventDefault();
+            const severity = document.getElementById('med-severity').value;
+            const symptom = document.getElementById('med-type').value;
+            const isUnconscious = document.getElementById('med-conscious').checked;
+
+            let details = `[${severity}] ${symptom}`;
+            if (isUnconscious) details += " (UNCONSCIOUS PILGRIM)";
+
+            socket.emit('MEDICAL_REPORT', {
+                userId: USER_ID,
+                type: 'MEDICAL_REPORT',
+                severity: severity.toLowerCase(),
+                details: details,
+                location: `${startLoc[0]}, ${startLoc[1]}`,
+                time: new Date().toLocaleTimeString()
+            });
+
+            document.getElementById('medical-modal').classList.add('hidden');
+            showToast("🏥 Medical alert dispatched! Ambulance & First Aid team alerted.", 'error');
+        }
+
+        // --- 13. LOST PERSON ---
+        let knownFaces = JSON.parse(localStorage.getItem('suraksha_missing_faces') || '[]');
+
+        function submitLostReport(e) {
+            e.preventDefault();
+            const name = document.getElementById('p-name').value;
+            const age = document.getElementById('p-age').value;
+            const contact = document.getElementById('p-contact').value;
+            const imgFile = document.getElementById('p-image').files[0];
+
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const imgBase64 = reader.result;
+                const msgData = {
+                    userId: USER_ID,
+                    type: 'MISSING_PERSON',
+                    details: `Missing: ${name} (${age}y) | Ph: ${contact}`,
+                    image: imgBase64,
+                    location: `${startLoc[0]}, ${startLoc[1]}`,
+                    time: new Date().toLocaleTimeString()
+                };
+
+                socket.emit('MISSING_PERSON', msgData);
+                knownFaces.push(msgData);
+                localStorage.setItem('suraksha_missing_faces', JSON.stringify(knownFaces));
+
+                document.getElementById('lost-modal').classList.add('hidden');
+                showToast("🔍 Missing person broadcast posted across Mela network.", 'success');
+                e.target.reset();
+            };
+            if (imgFile) reader.readAsDataURL(imgFile);
+        }
+
+        // --- 14. AI FACE SCANNER ---
+        let isScannerRunning = false;
+        let isModelLoaded = false;
+        let currentFacing = 'environment';
+        let scanInterval;
+        let currentMatch = null;
+
+        async function loadFaceModels() {
+            if (isModelLoaded) return;
+            const status = document.getElementById('scan-status');
+            if (status) status.innerText = "Loading AI Vision Models...";
+
+            try {
+                const MODEL_URL = 'https://vladmandic.github.io/face-api/model/';
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+                isModelLoaded = true;
+                if (status) status.innerText = "AI Vision Ready.";
+            } catch (err) {
+                if (status) status.innerText = "Camera Ready (Standard View).";
+            }
+        }
+
+        async function openScannerModal() {
+            document.getElementById('scanner-modal').classList.remove('hidden');
+            await loadFaceModels();
+            toggleScanner(true);
+        }
+
+        function closeScannerModal() {
+            toggleScanner(false);
+            document.getElementById('scanner-modal').classList.add('hidden');
+        }
+
+        async function toggleScanner(start) {
+            const video = document.getElementById('scanner-video');
+            const btnStart = document.getElementById('btn-start-scan');
+            const btnStop = document.getElementById('btn-stop-scan');
+
+            if (start) {
+                isScannerRunning = true;
+                if (btnStart) btnStart.classList.add('hidden');
+                if (btnStop) btnStop.classList.remove('hidden');
+
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: currentFacing }
+                    });
+                    video.srcObject = stream;
+                    video.onloadedmetadata = () => runDetectionLoop();
+                } catch (err) {
+                    showToast("Camera access unavailable.", 'error');
+                }
+            } else {
+                isScannerRunning = false;
+                if (btnStart) btnStart.classList.remove('hidden');
+                if (btnStop) btnStop.classList.add('hidden');
+                if (video && video.srcObject) {
+                    video.srcObject.getTracks().forEach(t => t.stop());
+                }
+                clearInterval(scanInterval);
+            }
+        }
+
+        function flipCamera() {
+            currentFacing = currentFacing === 'environment' ? 'user' : 'environment';
+            toggleScanner(false);
+            setTimeout(() => toggleScanner(true), 300);
+        }
+
+        async function runDetectionLoop() {
+            const video = document.getElementById('scanner-video');
+            const canvas = document.getElementById('scanner-canvas');
+            if (!video || !canvas || !isModelLoaded) return;
+
+            faceapi.matchDimensions(canvas, { width: video.clientWidth, height: video.clientHeight });
+
+            scanInterval = setInterval(async () => {
+                if (!isScannerRunning) return;
+                try {
+                    const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
+                    const resized = faceapi.resizeResults(detections, { width: video.clientWidth, height: video.clientHeight });
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    faceapi.draw.drawDetections(canvas, resized);
+
+                    if (detections.length > 0 && knownFaces.length > 0) {
+                        const target = knownFaces[0];
+                        const resDiv = document.getElementById('scan-result');
+                        const resName = document.getElementById('match-name');
+                        const resImg = document.getElementById('match-img');
+                        if (resDiv) resDiv.classList.remove('hidden');
+                        if (resName) resName.innerText = target.details;
+                        if (resImg && target.image) resImg.src = target.image;
+                        currentMatch = target;
+                    }
+                } catch (e) {}
+            }, 600);
+        }
+
+        function notifyMatch() {
+            if (!currentMatch) return;
+            socket.emit('FOUND_PERSON', {
+                targetId: currentMatch.userId,
+                details: currentMatch.details,
+                location: `${startLoc[0]}, ${startLoc[1]}`,
+                time: new Date().toLocaleTimeString(),
+                finderId: USER_ID
+            });
+            showToast("Police & report owner notified with coordinates!", 'success');
+            closeScannerModal();
+        }
+
+        // ========================================================
+        // --- 15. INDEXEDDB OFFLINE-FIRST QUEUE & SYNC ENGINE ---
+        // ========================================================
+        let offlineDb = null;
+        let offlineQueueCount = 0;
+
+        function initOfflineDb() {
+            const request = indexedDB.open('SurakshaKumbhOfflineDB', 1);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains('offline_events')) {
+                    db.createObjectStore('offline_events', { keyPath: 'id', autoIncrement: true });
+                }
+            };
+            request.onsuccess = (e) => {
+                offlineDb = e.target.result;
+                refreshOfflineQueueBadge();
+            };
+            request.onerror = (e) => {
+                console.warn('IndexedDB not available, falling back to localStorage');
+            };
+        }
+        initOfflineDb();
+
+        function queueOfflineEvent(eventName, payload) {
+            const item = {
+                eventName: eventName,
+                payload: payload,
+                timestamp: Date.now()
+            };
+
+            // Always forward to local mesh radio first (works without server/internet)
+            if (typeof meshChannel !== 'undefined') {
+                meshChannel.postMessage({
+                    packetId: 'OFFLINE-' + Date.now(),
+                    type: eventName,
+                    originNode: USER_ID,
+                    hops: 0,
+                    relayPath: [USER_ID],
+                    payload: payload,
+                    timestamp: Date.now()
+                });
+            }
+
+            if (!offlineDb) {
+                let localQ = JSON.parse(localStorage.getItem('suraksha_offline_q') || '[]');
+                localQ.push(item);
+                localStorage.setItem('suraksha_offline_q', JSON.stringify(localQ));
+                offlineQueueCount = localQ.length;
+                updateQueueBadges();
+                return;
+            }
+
+            const tx = offlineDb.transaction('offline_events', 'readwrite');
+            const store = tx.objectStore('offline_events');
+            store.add(item);
+            tx.oncomplete = () => {
+                refreshOfflineQueueBadge();
+            };
+        }
+
+        function refreshOfflineQueueBadge() {
+            if (!offlineDb) return;
+            const tx = offlineDb.transaction('offline_events', 'readonly');
+            const store = tx.objectStore('offline_events');
+            const countReq = store.count();
+            countReq.onsuccess = () => {
+                offlineQueueCount = countReq.result;
+                updateQueueBadges();
+            };
+        }
+
+        function updateQueueBadges() {
+            const b1 = document.getElementById('offline-queue-badge');
+            const b2 = document.getElementById('offline-queue-badge-mob');
+            const text = `⚡ Mesh Sync: ${offlineQueueCount}`;
+            if (b1) b1.innerText = text;
+            if (b2) b2.innerText = text;
+        }
+
+        function flushOfflineQueue() {
+            if (!offlineDb) {
+                let localQ = JSON.parse(localStorage.getItem('suraksha_offline_q') || '[]');
+                if (localQ.length === 0) return;
+                localQ.forEach(item => {
+                    socket.emit(item.eventName, item.payload);
+                });
+                localStorage.removeItem('suraksha_offline_q');
+                showToast(`✅ Synced ${localQ.length} offline emergency signals!`, 'success');
+                offlineQueueCount = 0;
+                updateQueueBadges();
+                return;
+            }
+
+            const tx = offlineDb.transaction('offline_events', 'readwrite');
+            const store = tx.objectStore('offline_events');
+            const getAllReq = store.getAll();
+
+            getAllReq.onsuccess = () => {
+                const items = getAllReq.result;
+                if (!items || items.length === 0) return;
+
+                items.forEach(item => {
+                    socket.emit(item.eventName, item.payload);
+                });
+
+                store.clear();
+                tx.oncomplete = () => {
+                    offlineQueueCount = 0;
+                    updateQueueBadges();
+                    showToast(`✅ Synced ${items.length} offline signals to Command Center!`, 'success');
+                };
+            };
+        }
+
+        // Flush when socket reconnects
+        socket.on('connect', () => {
+            const badge = document.getElementById('conn-status-badge-mob');
+            if (badge) {
+                badge.innerText = "Connected";
+                badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-400";
+            }
+            flushOfflineQueue();
+        });
+
+        socket.on('disconnect', () => {
+            const badge = document.getElementById('conn-status-badge-mob');
+            if (badge) {
+                badge.innerText = "Offline (Mesh Active)";
+                badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-400";
+            }
+        });
+
+        // ========================================================
+        // --- 16. WEB AUDIO HIGH-DECIBEL SAFETY SIREN ---
+        // ========================================================
+        let sirenCtx = null;
+        let sirenOsc = null;
+        let sirenGain = null;
+        let sirenInterval = null;
+        let isSirenActive = false;
+
+        function toggleEmergencySiren() {
+            if (isSirenActive) {
+                stopEmergencySiren();
+            } else {
+                startEmergencySiren();
+            }
+        }
+
+        function startEmergencySiren() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) {
+                    showToast("Audio API not supported in this browser.", 'error');
+                    return;
+                }
+
+                sirenCtx = new AudioContext();
+                sirenOsc = sirenCtx.createOscillator();
+                sirenGain = sirenCtx.createGain();
+
+                sirenOsc.type = 'sawtooth';
+                sirenOsc.frequency.setValueAtTime(800, sirenCtx.currentTime);
+
+                sirenGain.gain.setValueAtTime(0.5, sirenCtx.currentTime);
+                sirenOsc.connect(sirenGain);
+                sirenGain.connect(sirenCtx.destination);
+
+                sirenOsc.start();
+                isSirenActive = true;
+
+                let freqState = false;
+                sirenInterval = setInterval(() => {
+                    if (!sirenCtx || !sirenOsc) return;
+                    const targetFreq = freqState ? 800 : 1200;
+                    sirenOsc.frequency.linearRampToValueAtTime(targetFreq, sirenCtx.currentTime + 0.25);
+                    freqState = !freqState;
+                }, 300);
+
+                const btnText = document.getElementById('siren-btn-text');
+                const btn = document.getElementById('siren-toggle-btn');
+                const icon = document.getElementById('siren-icon');
+                if (btnText) btnText.innerText = "SIREN OFF";
+                if (btn) btn.className = "px-3.5 py-2 rounded-xl text-xs font-black transition bg-red-600 hover:bg-red-700 text-white shadow-lg animate-pulse flex items-center gap-1.5 cursor-pointer";
+                if (icon) icon.className = "p-3 rounded-2xl bg-red-100 dark:bg-red-950/60 text-red-600 animate-bounce";
+
+                showToast("🔊 High-Decibel Siren playing! Tap again to stop.", 'error');
+
+            } catch (err) {
+                console.error("Siren audio error:", err);
+                showToast("Could not start siren audio.", 'error');
+            }
+        }
+
+        function stopEmergencySiren() {
+            if (sirenInterval) clearInterval(sirenInterval);
+            if (sirenOsc) {
+                try { sirenOsc.stop(); sirenOsc.disconnect(); } catch (e) {}
+                sirenOsc = null;
+            }
+            if (sirenCtx) {
+                try { sirenCtx.close(); } catch (e) {}
+                sirenCtx = null;
+            }
+            isSirenActive = false;
+
+            const btnText = document.getElementById('siren-btn-text');
+            const btn = document.getElementById('siren-toggle-btn');
+            const icon = document.getElementById('siren-icon');
+            if (btnText) btnText.innerText = "SIREN ON";
+            if (btn) btn.className = "px-3.5 py-2 rounded-xl text-xs font-black transition bg-amber-500 hover:bg-amber-600 text-white shadow-sm flex items-center gap-1.5 cursor-pointer";
+            if (icon) icon.className = "p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600";
+        }
+
+        // ========================================================
+        // --- 17. 1-TAP HINDI/ENGLISH VOICE SOS DICTATION ---
+        // ========================================================
+        function startVoiceSosDictation() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                showToast("Speech recognition not supported in browser. Please type or press SOS.", 'error');
+                return;
+            }
+
+            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const dictRec = new SpeechRec();
+            dictRec.continuous = false;
+            dictRec.interimResults = false;
+            dictRec.lang = 'hi-IN';
+
+            const status = document.getElementById('voice-dictate-status');
+            const btn = document.getElementById('voice-dictate-btn');
+            const icon = document.getElementById('voice-dictate-icon');
+
+            if (status) status.innerText = "Listening... बोलिए अपनी समस्या";
+            if (btn) btn.className = "px-3.5 py-2 rounded-xl text-xs font-black transition bg-red-600 text-white animate-pulse flex items-center gap-1.5";
+            if (icon) icon.className = "p-3 rounded-2xl bg-red-100 text-red-600 animate-bounce";
+
+            dictRec.onresult = (evt) => {
+                const spokenText = evt.results[0][0].transcript;
+                if (status) status.innerText = `सुना गया: "${spokenText}"`;
+                
+                // Transmit spoken SOS
+                sendSOS(spokenText);
+                showToast(`🚨 Spoken SOS Sent: "${spokenText}"`, 'error');
+            };
+
+            dictRec.onerror = () => {
+                if (status) status.innerText = "Error. Please tap SOS button.";
+                resetVoiceSosUi();
+            };
+
+            dictRec.onend = () => {
+                resetVoiceSosUi();
+            };
+
+            try {
+                dictRec.start();
+            } catch (e) {
+                resetVoiceSosUi();
+            }
+        }
+
+        function resetVoiceSosUi() {
+            const btn = document.getElementById('voice-dictate-btn');
+            const icon = document.getElementById('voice-dictate-icon');
+            if (btn) btn.className = "px-3.5 py-2 rounded-xl text-xs font-black transition bg-purple-600 hover:bg-purple-700 text-white shadow-sm flex items-center gap-1.5 cursor-pointer";
+            if (icon) icon.className = "p-3 rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-600";
+        }
+
+        // ========================================================
+        // --- 18. NDMA CAP LIVE ALERTS & AUDIO READOUT ---
+        // ========================================================
+        let currentCapAlert = {
+            headline: "Heavy Crowd Surge at Pontoon Bridge #4 (Ganga)",
+            headline_hi: "पांटून पुल संख्या 4 पर अत्यधिक भीड़ - तुरंत मार्ग बदलें",
+            area: "Sector 3-4 Pontoon",
+            severity: "Severe"
+        };
+
+        function speakCurrentCapAlert() {
+            if (!('speechSynthesis' in window)) {
+                showToast("Speech synthesis not available in this browser.", 'info');
+                return;
+            }
+
+            const textToSpeak = currentCapAlert.headline_hi || currentCapAlert.headline;
+            const utter = new SpeechSynthesisUtterance(textToSpeak);
+            utter.lang = 'hi-IN';
+            utter.rate = 0.95;
+            window.speechSynthesis.speak(utter);
+            showToast("🔊 Playing Hindi voice advisory...", 'info');
+        }
+
+        function dismissCapBanner() {
+            document.getElementById('cap-user-alert-banner')?.classList.add('hidden');
+        }
+
+        socket.on('CAP_ALERT_BROADCAST', (alert) => {
+            if (!alert) return;
+            const info = alert.info || {};
+            currentCapAlert = {
+                headline: info.headline || 'Emergency Alert',
+                headline_hi: info.headline_hi || info.headline || '',
+                area: info.areaDesc || 'Mela Area',
+                severity: info.severity || 'Severe'
+            };
+
+            const banner = document.getElementById('cap-user-alert-banner');
+            const sevEl = document.getElementById('cap-banner-sev');
+            const areaEl = document.getElementById('cap-banner-area');
+            const hlEl = document.getElementById('cap-banner-headline');
+            const hlHiEl = document.getElementById('cap-banner-headline-hi');
+
+            if (sevEl) sevEl.innerText = `${currentCapAlert.severity} ADVISORY`;
+            if (areaEl) areaEl.innerText = currentCapAlert.area;
+            if (hlEl) hlEl.innerText = currentCapAlert.headline;
+            if (hlHiEl) hlHiEl.innerText = currentCapAlert.headline_hi;
+            if (banner) banner.classList.remove('hidden');
+
+            showToast(`🚨 NDMA CAP: ${currentCapAlert.headline}`, 'error');
+            speakCurrentCapAlert();
+        });
+
+        socket.on('DIVERSION_TRIGGER', (data) => {
+            showToast(`🔀 Route Diversion Activated from ${data.fromSector} to ${data.toSector}!`, 'info');
+            const p4 = document.getElementById('stat-sec-pontoon4');
+            if (p4) {
+                p4.className = "p-2 rounded-xl bg-purple-100 dark:bg-purple-950 border border-purple-400";
+            }
+        });
+
+        socket.on('CDSI_UPDATE', (metrics) => {
+            if (!metrics) return;
+            if (metrics['pontoon-3']) {
+                const el = document.getElementById('stat-sec-pontoon3');
+                if (el) el.innerHTML = `
+                    <div class="text-[10px] text-slate-500">Pontoon #3</div>
+                    <div class="font-extrabold text-rose-600 dark:text-rose-400">${metrics['pontoon-3'].density} ppl/m²</div>
+                    <div class="text-[9px] text-rose-500">${metrics['pontoon-3'].status}</div>
+                `;
+            }
+            if (metrics['sangam-nose']) {
+                const el = document.getElementById('stat-sec-sangam');
+                if (el) el.innerHTML = `
+                    <div class="text-[10px] text-slate-500">Sangam Nose</div>
+                    <div class="font-extrabold text-amber-600 dark:text-amber-400">${metrics['sangam-nose'].capacity}% Cap</div>
+                    <div class="text-[9px] text-slate-400">${metrics['sangam-nose'].density} ppl/m²</div>
+                `;
+            }
+        });
+    </script>
+    <script src="suraksha_guard.js"></script>
+    <script src="mesh_walkie_talkie.js"></script>
+    <script>
+        // Initialize Citizen / Sevadar Offline Tactical Walkie-Talkie
+        window.addEventListener('DOMContentLoaded', () => {
+            const sevadarId = 'SEVADAR-' + Math.floor(Math.random() * 899 + 100);
+            window.__surakshaMessenger = new SurakshaMeshMessenger({
+                nodeId: sevadarId,
+                role: 'Field Sevadar',
+                containerId: 'user-mesh-chat-container'
+            });
+        });
+    </script>
+</body>
+
+</html>

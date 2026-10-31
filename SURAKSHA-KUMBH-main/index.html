@@ -1,0 +1,2135 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suraksha Kumbh (सुरक्षा कुंभ) - Central Command & Crowd Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        kumbh: {
+                            orange: '#ea580c',
+                            amber: '#f59e0b',
+                            navy: '#0f172a',
+                            slate: '#1e293b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .custom-scroll::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .dark .custom-scroll::-webkit-scrollbar-thumb {
+            background: #334155;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #admin-map {
+            height: 100%;
+            width: 100%;
+            min-height: 480px;
+            z-index: 1;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 dark:bg-[#0b0f17] dark:text-slate-100 min-h-screen flex flex-col antialiased selection:bg-orange-500 selection:text-white">
+
+    <!-- TOP NAV BAR (CLEAN, SEVA-SYNC INSPIRED HEADER) -->
+    <header class="bg-white dark:bg-[#111827] border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50 shadow-sm transition-colors">
+        <div class="max-w-[1920px] mx-auto px-4 lg:px-6 py-2.5 flex items-center justify-between gap-4">
+            
+            <!-- BRANDING & LOGO -->
+            <div class="flex items-center gap-3">
+                <div class="p-1 rounded-xl bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800/60 shadow-sm">
+                    <img src="logo.png" alt="Suraksha Kumbh Logo" class="w-9 h-9 object-contain">
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-lg font-black tracking-tight text-slate-900 dark:text-white uppercase">
+                            SURAKSHA KUMBH
+                        </h1>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400 border border-orange-200 dark:border-orange-500/40">
+                            सुरक्षा कुंभ 2026
+                        </span>
+                        <span class="hidden sm:inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                            Live Command Active
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-medium" data-i18n="admin_subtitle">Maha Kumbh Central Command & Strategic Crowd Safety Network</p>
+                </div>
+            </div>
+
+            <!-- KEY STATS PILLS (CLEAN, NOT CRAMMED) -->
+            <div class="hidden xl:flex items-center gap-3">
+                <div class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60">
+                    <div class="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400"><i class="fas fa-users text-xs"></i></div>
+                    <div>
+                        <div class="text-[9px] font-bold uppercase text-slate-500 dark:text-slate-400">Pilgrims</div>
+                        <div class="text-sm font-mono font-bold text-slate-900 dark:text-blue-300 leading-none" id="active-users">0</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60">
+                    <div class="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"><i class="fas fa-satellite-dish text-xs"></i></div>
+                    <div>
+                        <div class="text-[9px] font-bold uppercase text-slate-500 dark:text-slate-400">Active Signals</div>
+                        <div class="text-sm font-mono font-bold text-slate-900 dark:text-emerald-300 leading-none" id="active-count">0</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60">
+                    <div class="p-1.5 rounded-lg bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400"><i class="fas fa-heart-pulse text-xs"></i></div>
+                    <div>
+                        <div class="text-[9px] font-bold uppercase text-slate-500 dark:text-slate-400">Critical Cases</div>
+                        <div class="text-sm font-mono font-bold text-red-600 dark:text-red-400 leading-none" id="kpi-critical">0</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60">
+                    <div class="p-1.5 rounded-lg bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400"><i class="fas fa-boxes-packing text-xs"></i></div>
+                    <div>
+                        <div class="text-[9px] font-bold uppercase text-slate-500 dark:text-slate-400">Aid Queue</div>
+                        <div class="text-sm font-mono font-bold text-purple-600 dark:text-purple-400 leading-none" id="kpi-requests">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTROLS: THEME SWITCHER, LANGUAGE, CLOCK -->
+            <div class="flex items-center gap-2.5">
+                <!-- 3D TWIN & PILGRIM APP LINKS (RELATIVE PATHS COMPATIBLE WITH GITHUB PAGES & VERCEL) -->
+                <a href="prayagraj_twin.html" target="_blank" class="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fas fa-cube"></i>
+                    <span class="hidden md:inline">3D Twin</span>
+                </a>
+
+                <a href="User_Interface.html" target="_blank" class="px-3 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fas fa-mobile-screen"></i>
+                    <span class="hidden md:inline">Pilgrim App</span>
+                </a>
+
+                <!-- LIGHT / DARK THEME TOGGLE BUTTON -->
+                <button onclick="toggleTheme()" id="theme-toggle-btn"
+                    class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-amber-400 transition cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+                    title="Toggle Light / Dark Mode">
+                    <i class="fas fa-sun text-amber-500 dark:hidden"></i>
+                    <i class="fas fa-moon text-blue-400 hidden dark:inline"></i>
+                </button>
+
+                <!-- LANGUAGE SELECTOR (8 Languages) -->
+                <select onchange="changeLanguage(this.value)" id="admin-lang-select"
+                    class="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold px-2.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none cursor-pointer">
+                    <option value="hi">🇮🇳 हिन्दी</option>
+                    <option value="en">🇬🇧 EN</option>
+                    <option value="mr">🇮🇳 मराठी</option>
+                    <option value="bn">🇮🇳 বাংলা</option>
+                    <option value="ta">🇮🇳 தமிழ்</option>
+                    <option value="te">🇮🇳 తెలుగు</option>
+                    <option value="gu">🇮🇳 ગુજ.</option>
+                    <option value="pa">🇮🇳 ਪੰਜਾਬੀ</option>
+                </select>
+
+                <div class="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-mono font-semibold text-slate-600 dark:text-slate-400">
+                    <i class="far fa-clock text-orange-500"></i>
+                    <span id="clock">00:00:00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- CLEAN SEVA-SYNC STYLE TAB NAVIGATION (GENEROUS SPACING, NO CLUTTER) -->
+        <div class="max-w-[1920px] mx-auto px-4 lg:px-6 flex gap-2 border-t border-slate-200 dark:border-slate-800/80 pt-2 pb-1.5 overflow-x-auto">
+            <button onclick="switchTab('tab-live-ops')" id="nav-btn-live-ops"
+                class="tab-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-orange-600 text-white shadow-sm shadow-orange-600/20">
+                <i class="fas fa-map-location-dot"></i>
+                <span data-i18n="tab_live_ops">Live Map & Operations</span>
+            </button>
+            <button onclick="switchTab('tab-resources')" id="nav-btn-resources"
+                class="tab-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">
+                <i class="fas fa-boxes-packing text-orange-500"></i>
+                <span data-i18n="tab_resources">Resource Allocation & Logistics</span>
+                <span id="tab-req-badge" class="ml-1 px-1.5 py-0.2 rounded-full bg-orange-500 text-white text-[10px] font-black hidden">0</span>
+            </button>
+            <button onclick="switchTab('tab-incidents')" id="nav-btn-incidents"
+                class="tab-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">
+                <i class="fas fa-bell text-red-500"></i>
+                <span data-i18n="tab_incidents">Incident Command & Triage</span>
+            </button>
+            <button onclick="switchTab('tab-mesh-network')" id="nav-btn-mesh-network"
+                class="tab-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">
+                <i class="fas fa-network-wired text-cyan-500"></i>
+                <span>Offline Mesh Network</span>
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            </button>
+            <button onclick="switchTab('tab-cap-cdsi')" id="nav-btn-cap-cdsi"
+                class="tab-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">
+                <i class="fas fa-tower-broadcast text-rose-500"></i>
+                <span>NDMA CAP & Crowd Surge (CDSI)</span>
+                <span id="cap-active-badge" class="px-1.5 py-0.2 rounded-full bg-rose-600 text-white text-[10px] font-black">1</span>
+            </button>
+            <button onclick="switchTab('tab-lost-volunteers')" id="nav-btn-lost-volunteers"
+                class="tab-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">
+                <i class="fas fa-hands-holding-child text-blue-500"></i>
+                <span data-i18n="tab_lost_volunteers">Lost Persons & Volunteers</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- BROADCAST BANNER -->
+    <section class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 lg:px-6 py-2.5 transition-colors">
+        <div class="max-w-[1920px] mx-auto flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+                <span class="p-1.5 rounded-lg bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400">
+                    <i class="fas fa-bullhorn text-xs"></i>
+                </span>
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Mela Broadcast Advisory:</span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 flex-grow max-w-4xl">
+                <select id="disaster-type" class="bg-slate-50 dark:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 focus:outline-none">
+                    <option value="Stampede Warning">⚠️ Stampede / Crowd Surge (भीड़ नियंत्रण चेतावनी)</option>
+                    <option value="Ghat High Water">🌊 Ghat Water Level Danger (घाट जलस्तर चेतावनी)</option>
+                    <option value="Severe Weather">⛈️ Heavy Rain / Windstorm (तेज आंधी / वर्षा)</option>
+                    <option value="Fire Hazard">🔥 Fire Hazard Alert (अग्नि संकट)</option>
+                    <option value="Lost Child / Missing Person">🔍 Missing Pilgrim Broadcast</option>
+                </select>
+
+                <select id="disaster-zone" class="bg-slate-50 dark:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 focus:outline-none">
+                    <option value="Sangam Ghat">📍 Sangam Main Ghat (त्रिवेणी संगम)</option>
+                    <option value="Arail Ghat">📍 Arail Ghat (अरैल क्षेत्र)</option>
+                    <option value="Jhusi Sector">📍 Jhusi Ghat / Sector 3</option>
+                    <option value="Parade Ground">📍 Parade Ground Central Sector</option>
+                    <option value="All Sectors">📢 ALL MELA SECTORS (सम्पूर्ण मेला क्षेत्र)</option>
+                </select>
+
+                <button onclick="declareDisaster()"
+                    class="bg-red-600 hover:bg-red-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold tracking-wide transition shadow flex items-center gap-1.5">
+                    <i class="fas fa-radiation"></i> <span>BROADCAST EMERGENCY</span>
+                </button>
+
+                <button id="clear-btn" onclick="clearDisaster()"
+                    class="hidden bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold tracking-wide transition shadow flex items-center gap-1.5">
+                    <i class="fas fa-check-circle"></i> <span>ALL CLEAR</span>
+                </button>
+            </div>
+
+            <!-- SITUATION QUICK PILL -->
+            <div class="flex items-center gap-3 text-xs font-mono bg-slate-100 dark:bg-black/40 px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-800">
+                <span class="text-slate-500 dark:text-slate-400"><i class="fas fa-water text-blue-500 mr-1"></i>Ganges:</span>
+                <span id="feed-river" class="text-emerald-600 dark:text-emerald-400 font-bold">Normal (2160 m³/s)</span>
+                <span class="text-slate-400 dark:text-slate-600">|</span>
+                <span class="text-slate-500 dark:text-slate-400"><i class="fas fa-wind text-orange-500 mr-1"></i>Wind:</span>
+                <span id="feed-cyclone" class="text-slate-700 dark:text-slate-200">Calm</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- MAIN BODY CONTENT -->
+    <main class="flex-grow max-w-[1920px] w-full mx-auto p-4 lg:p-6 flex flex-col gap-5">
+
+        <!-- ============================================== -->
+        <!-- TAB 1: GEOSPATIAL MAP & LIVE OPERATIONS (FIXED TILE LAYER) -->
+        <!-- ============================================== -->
+        <div id="tab-live-ops" class="tab-content flex-grow grid grid-cols-1 lg:grid-cols-4 gap-5">
+            
+            <!-- LEFT COLUMN: STATUS & OVERLAYS -->
+            <div class="lg:col-span-1 flex flex-col gap-4">
+                
+                <!-- SITUATION CARD -->
+                <div class="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400 flex items-center gap-2">
+                            <i class="fas fa-shield-halved"></i> Mela Environment Status
+                        </h3>
+                        <span class="text-[10px] font-mono text-slate-400">Prayagraj</span>
+                    </div>
+
+                    <div class="space-y-2 text-xs">
+                        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-wind text-blue-500"></i>
+                                <span class="text-slate-600 dark:text-slate-300">Wind & Weather</span>
+                            </div>
+                            <span id="feed-weather-status" class="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">Calm (2.1 km/h)</span>
+                        </div>
+
+                        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-temperature-high text-amber-500"></i>
+                                <span class="text-slate-600 dark:text-slate-300">Fire Hazard Index</span>
+                            </div>
+                            <span id="feed-fire" class="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">Low (24°C, 65%)</span>
+                        </div>
+
+                        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-water text-cyan-500"></i>
+                                <span class="text-slate-600 dark:text-slate-300">Sangam Flow</span>
+                            </div>
+                            <span class="font-mono text-cyan-600 dark:text-cyan-400 font-semibold">2,160 m³/s</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OVERLAYS CONTROL -->
+                <div class="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-3">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                        <i class="fas fa-layer-group"></i> Ghat Overlays
+                    </h3>
+
+                    <div class="space-y-2 text-xs">
+                        <label class="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition">
+                            <span class="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                                <i class="fas fa-person-shelter text-amber-500"></i> Safe Zones (सुरक्षित क्षेत्र)
+                            </span>
+                            <input type="checkbox" checked onchange="toggleLayer('safezones', this.checked)" class="w-4 h-4 accent-orange-600 rounded">
+                        </label>
+
+                        <label class="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition">
+                            <span class="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                                <i class="fas fa-bridge-water text-cyan-500"></i> Pontoon Bridges (पांटून पुल)
+                            </span>
+                            <input type="checkbox" onchange="toggleLayer('pontoon', this.checked)" class="w-4 h-4 accent-cyan-600 rounded">
+                        </label>
+
+                        <label class="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition">
+                            <span class="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                                <i class="fas fa-truck-medical text-emerald-500"></i> Medical Aid Posts
+                            </span>
+                            <input type="checkbox" checked onchange="toggleLayer('medposts', this.checked)" class="w-4 h-4 accent-emerald-600 rounded">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- TRIAGE STATUS CARD -->
+                <div class="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-2">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                        <span>Triage Board Summary</span>
+                        <button onclick="switchTab('tab-incidents')" class="text-[10px] text-orange-600 dark:text-orange-400 hover:underline">View All</button>
+                    </h3>
+                    <div class="grid grid-cols-3 gap-2 text-center pt-1">
+                        <div class="p-2 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60">
+                            <div class="text-[9px] font-bold text-red-600 dark:text-red-400 uppercase">Critical</div>
+                            <div class="text-base font-mono font-bold text-red-700 dark:text-red-300" id="count-critical">0</div>
+                        </div>
+                        <div class="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60">
+                            <div class="text-[9px] font-bold text-amber-600 dark:text-amber-400 uppercase">Moderate</div>
+                            <div class="text-base font-mono font-bold text-amber-700 dark:text-amber-300" id="count-moderate">0</div>
+                        </div>
+                        <div class="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60">
+                            <div class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">Minor</div>
+                            <div class="text-base font-mono font-bold text-emerald-700 dark:text-emerald-300" id="count-minor">0</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT 3 COLS: WATERMARK-FREE MAP & INCIDENT FEED -->
+            <div class="lg:col-span-3 flex flex-col gap-4">
+                
+                <!-- MAP CONTAINER WITH 2D GIS & 3D DIGITAL TWIN TOGGLE -->
+                <div class="bg-white dark:bg-[#111827] p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col relative h-[560px]">
+                    <div class="flex items-center justify-between mb-2 px-1">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-map-marked-alt text-orange-600 text-sm"></i>
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">Prayagraj Operations Radar</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <!-- 2D / 3D SWITCH -->
+                            <div class="bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl flex items-center border border-slate-200 dark:border-slate-700">
+                                <button onclick="setMapMode('2d')" id="btn-map-2d" class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white dark:bg-slate-700 text-orange-600 dark:text-orange-400 shadow-sm flex items-center gap-1 transition">
+                                    <i class="fas fa-map"></i> 2D GIS
+                                </button>
+                                <button onclick="setMapMode('3d')" id="btn-map-3d" class="px-2.5 py-1 rounded-lg text-[10px] font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white flex items-center gap-1 transition">
+                                    <i class="fas fa-cube text-blue-500"></i> 3D Twin
+                                </button>
+                            </div>
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400 font-bold text-[10px]">
+                                <span class="w-1.5 h-1.5 rounded-full bg-red-600 animate-ping"></span> SOS
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- LEAFLET 2D MAP ELEMENT -->
+                    <div id="admin-map" class="rounded-xl overflow-hidden flex-grow border border-slate-200 dark:border-slate-800"></div>
+
+                    <!-- EMBEDDED 3D DIGITAL TWIN ELEMENT -->
+                    <div id="admin-map-3d" class="hidden rounded-xl overflow-hidden flex-grow border border-slate-200 dark:border-slate-800 relative bg-[#0b0f19]">
+                        <iframe id="iframe-twin" src="prayagraj_twin.html" class="w-full h-full border-0"></iframe>
+                    </div>
+                </div>
+
+                <!-- LIVE FIELD FEED -->
+                <div class="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                        <div class="flex items-center gap-2">
+                            <div class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></div>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">Incoming Field Signals & SOS Stream</h3>
+                        </div>
+                        <button onclick="document.getElementById('incident-table').innerHTML = ''" 
+                            class="text-[10px] font-bold px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 transition">
+                            Clear Feed
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scroll max-h-52">
+                        <table class="w-full text-left text-xs">
+                            <thead class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 sticky top-0 border-b border-slate-200 dark:border-slate-800">
+                                <tr>
+                                    <th class="py-2 px-3">Time</th>
+                                    <th class="py-2 px-3">Type</th>
+                                    <th class="py-2 px-3">Details</th>
+                                    <th class="py-2 px-3">Coordinates</th>
+                                    <th class="py-2 px-3 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="incident-table" class="divide-y divide-slate-100 dark:divide-slate-800/60 text-slate-700 dark:text-slate-300 font-medium">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 2: RESOURCE ALLOCATION & LOGISTICS -->
+        <!-- ============================================== -->
+        <div id="tab-resources" class="tab-content hidden flex flex-col gap-5">
+            
+            <div class="bg-white dark:bg-[#111827] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+                <div>
+                    <h2 class="text-base font-black text-slate-900 dark:text-white uppercase tracking-wide flex items-center gap-2.5">
+                        <i class="fas fa-boxes-stacked text-orange-600"></i>
+                        SURAKSHA KUMBH RESOURCE ALLOCATION COMMAND
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Real-time inventory management and direct relief team dispatching across all Ghats.</p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <button onclick="smartAutoAllocate()"
+                        class="bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2">
+                        <i class="fas fa-bolt"></i> SMART AUTO-ALLOCATE ALL
+                    </button>
+
+                    <button onclick="restockAllResources()"
+                        class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 transition flex items-center gap-2">
+                        <i class="fas fa-rotate"></i> RESTOCK ALL TO MAX
+                    </button>
+                </div>
+            </div>
+
+            <!-- INVENTORY CARDS GRID (7 RESOURCE TYPES) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4" id="resource-cards-container">
+                <!-- Injected via JavaScript -->
+            </div>
+
+            <!-- AID REQUESTS QUEUE & DISPATCH LOG -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <div class="bg-white dark:bg-[#111827] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <div class="flex items-center gap-2.5">
+                            <div class="p-2 rounded-xl bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400">
+                                <i class="fas fa-hand-holding-heart"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Live Pilgrim Aid Requests</h3>
+                                <p class="text-[10px] text-slate-500 dark:text-slate-400">Received directly from pilgrim companion apps</p>
+                            </div>
+                        </div>
+                        <span id="pending-requests-count" class="px-2.5 py-1 rounded-full text-xs font-bold font-mono bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400">
+                            0 Pending
+                        </span>
+                    </div>
+
+                    <div id="requests-queue-container" class="space-y-2.5 overflow-y-auto custom-scroll max-h-[380px] pr-1">
+                        <div class="text-center py-10 text-slate-400 text-xs font-medium" id="no-requests-msg">
+                            <i class="fas fa-clipboard-check text-3xl mb-2 opacity-50 text-emerald-500"></i>
+                            <p>All aid requests are fulfilled. No pending dispatches.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-[#111827] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <div class="flex items-center gap-2.5">
+                            <div class="p-2 rounded-xl bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">
+                                <i class="fas fa-truck-fast"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Field Dispatch Audit Log</h3>
+                                <p class="text-[10px] text-slate-500 dark:text-slate-400">Logged shipments and response unit handoffs</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="dispatch-log-list" class="space-y-2 overflow-y-auto custom-scroll max-h-[380px] text-xs">
+                        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex items-center justify-between text-slate-600 dark:text-slate-400">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-check-circle text-emerald-500"></i>
+                                <span>Initial Inventory Loaded at Sector 1 Depot</span>
+                            </div>
+                            <span class="font-mono text-[10px]">Ready</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 3: OFFLINE MESH NETWORK COMMAND CONSOLE -->
+        <!-- ============================================== -->
+        <div id="tab-mesh-network" class="tab-content hidden flex flex-col gap-5">
+            
+            <!-- MESH OVERVIEW BANNER -->
+            <div class="bg-white dark:bg-[#111827] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-base font-black text-slate-900 dark:text-white uppercase tracking-wide flex items-center gap-2">
+                            <i class="fas fa-network-wired text-cyan-500"></i>
+                            OFFLINE TACTICAL MESH NETWORK (ZERO INTERNET RELAY)
+                        </h2>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-400">
+                            P2P + LAN Mode Active
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Enables device-to-device distress signaling, packet hopping, and coordination even when telecom towers and internet fail.
+                    </p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <button onclick="broadcastMeshPing()"
+                        class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2">
+                        <i class="fas fa-tower-broadcast"></i> BROADCAST TEST MESH PING
+                    </button>
+                </div>
+            </div>
+
+            <!-- MESH METRICS -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Local Mesh Broker</div>
+                    <div class="text-base font-mono font-bold text-cyan-600 dark:text-cyan-400 mt-1">10.168.93.127:3001</div>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Direct phone connection without WAN</p>
+                </div>
+
+                <div class="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Transport Protocol</div>
+                    <div class="text-base font-mono font-bold text-slate-900 dark:text-white mt-1">WebRTC + BroadcastChannel</div>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Cross-device zero-setup relay</p>
+                </div>
+
+                <div class="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Active Mesh Peers</div>
+                    <div class="text-2xl font-mono font-black text-emerald-600 dark:text-emerald-400 mt-0.5" id="mesh-peer-count">1</div>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Nodes currently within relay range</p>
+                </div>
+
+                <div class="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Relayed Packets</div>
+                    <div class="text-2xl font-mono font-black text-purple-600 dark:text-purple-400 mt-0.5" id="mesh-packets-count">0</div>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Multi-hop packets routed</p>
+                </div>
+            </div>
+
+            <!-- OFFLINE TACTICAL WALKIE-TALKIE & MESH MESSENGER -->
+            <div id="mesh-chat-container"></div>
+
+            <!-- MESH CONSOLE (SEVA-SYNC TACTICAL CONSOLE STYLE) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                
+                <!-- PEER NODES LIST -->
+                <div class="bg-white dark:bg-[#111827] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-3">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                        <span>Discovered Mesh Nodes</span>
+                        <span class="text-[10px] text-cyan-600 font-mono">868 MHz / BLE Sim</span>
+                    </h3>
+
+                    <div id="mesh-nodes-list" class="space-y-2.5 overflow-y-auto custom-scroll max-h-80">
+                        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between text-xs">
+                            <div class="flex items-center gap-2">
+                                <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                                <div>
+                                    <div class="font-bold text-slate-900 dark:text-white">COMMAND-ROOT-01</div>
+                                    <div class="text-[10px] text-slate-500">Gateway Node • RSSI -45 dBm</div>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Root</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LIVE PACKET ROUTING STREAM -->
+                <div class="lg:col-span-2 bg-slate-900 text-emerald-400 p-5 rounded-2xl border border-slate-800 shadow-sm flex flex-col gap-3 font-mono text-xs">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2 text-slate-400">
+                        <span class="flex items-center gap-2">
+                            <i class="fas fa-terminal text-cyan-400"></i> Real-time Mesh Multi-Hop Routing Terminal
+                        </span>
+                        <button onclick="document.getElementById('mesh-terminal-log').innerHTML = ''" class="text-[10px] text-slate-400 hover:text-white">Clear</button>
+                    </div>
+
+                    <div id="mesh-terminal-log" class="overflow-y-auto custom-scroll h-80 space-y-1.5 text-[11px] leading-relaxed">
+                        <div class="text-slate-500">&gt;&gt; Suraksha Kumbh Tactical Mesh Initialized.</div>
+                        <div class="text-slate-500">&gt;&gt; Listening on BroadcastChannel 'suraksha_kumbh_mesh' & Local LAN.</div>
+                        <div class="text-cyan-400">&gt;&gt; Ready to relay packets without internet connectivity.</div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 4: INCIDENT COMMAND & TRIAGE BOARD -->
+        <!-- ============================================== -->
+        <div id="tab-incidents" class="tab-content hidden flex flex-col gap-5">
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white dark:bg-[#111827] p-5 rounded-2xl border-l-4 border-l-red-500 border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm">
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-400">Critical Triage (गंभीर स्थिति)</div>
+                        <div class="text-2xl font-mono font-black text-slate-900 dark:text-red-200 mt-1" id="triage-card-critical">0</div>
+                        <p class="text-[10px] text-slate-500 mt-0.5">Unconscious, severe trauma, cardiac emergency</p>
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-red-50 dark:bg-red-500/10 text-red-600 text-2xl">
+                        <i class="fas fa-heart-pulse"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-[#111827] p-5 rounded-2xl border-l-4 border-l-amber-500 border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm">
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Moderate Triage (मध्यम चोट)</div>
+                        <div class="text-2xl font-mono font-black text-slate-900 dark:text-amber-200 mt-1" id="triage-card-moderate">0</div>
+                        <p class="text-[10px] text-slate-500 mt-0.5">Fractures, severe dehydration, exhaustion</p>
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 text-2xl">
+                        <i class="fas fa-crutch"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-[#111827] p-5 rounded-2xl border-l-4 border-l-emerald-500 border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm">
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Minor Triage (सामान्य प्राथमिक उपचार)</div>
+                        <div class="text-2xl font-mono font-black text-slate-900 dark:text-emerald-200 mt-1" id="triage-card-minor">0</div>
+                        <p class="text-[10px] text-slate-500 mt-0.5">Superficial cuts, dizziness, basic aid</p>
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 text-2xl">
+                        <i class="fas fa-bandage"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-[#111827] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-4">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                        <i class="fas fa-list-check text-orange-600"></i> Full Incident Log & Resolution Workflow
+                    </h3>
+                </div>
+
+                <div class="overflow-x-auto custom-scroll max-h-[500px]">
+                    <table class="w-full text-left text-xs">
+                        <thead class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 sticky top-0 border-b border-slate-200 dark:border-slate-800">
+                            <tr>
+                                <th class="py-2.5 px-3">Time</th>
+                                <th class="py-2.5 px-3">Type</th>
+                                <th class="py-2.5 px-3">Details</th>
+                                <th class="py-2.5 px-3">Location</th>
+                                <th class="py-2.5 px-3">Status</th>
+                                <th class="py-2.5 px-3 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="full-incident-table" class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300 font-medium">
+                            <!-- Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 5: LOST PERSONS & VOLUNTEERS DIRECTORY -->
+        <!-- ============================================== -->
+        <div id="tab-lost-volunteers" class="tab-content hidden grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div class="bg-white dark:bg-[#111827] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-4">
+                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="p-2 rounded-xl bg-purple-100 dark:bg-purple-500/20 text-purple-600">
+                            <i class="fas fa-person-circle-question text-base"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Missing Persons Board (खोया-पाया केंद्र)</h3>
+                            <p class="text-[10px] text-slate-500">Live AI Vision Camera matching</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="missing-persons-gallery" class="grid grid-cols-1 sm:grid-cols-2 gap-3 overflow-y-auto custom-scroll max-h-[520px]">
+                    <div class="col-span-full text-center py-12 text-slate-400 text-xs">
+                        <i class="fas fa-users-viewfinder text-3xl mb-2 opacity-40 text-purple-500"></i>
+                        <p>No missing person reports active. New reports will appear here with instant face matching.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-[#111827] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-4">
+                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="p-2 rounded-xl bg-blue-100 dark:bg-blue-500/20 text-blue-600">
+                            <i class="fas fa-hand-holding-hand text-base"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Registered Volunteers (मेला सेवादार)</h3>
+                            <p class="text-[10px] text-slate-500">Field guides, medical helpers, and ghat volunteers</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="volunteer-roster-list" class="space-y-3 overflow-y-auto custom-scroll max-h-[520px]">
+                    <div class="text-center py-12 text-slate-400 text-xs">
+                        <i class="fas fa-id-card-clip text-3xl mb-2 opacity-40 text-blue-500"></i>
+                        <p>Volunteers who register via the citizen app will be listed here for task deployment.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 6: NDMA CAP ALERTS & CROWD SURGE (CDSI) -->
+        <!-- ========================================== -->
+        <div id="tab-cap-cdsi" class="tab-content hidden flex flex-col gap-5">
+            <!-- SHAHI SNAN & FESTIVAL PROTOCOL STATUS -->
+            <div class="bg-gradient-to-r from-orange-500 via-amber-600 to-rose-600 p-4 rounded-2xl text-white shadow-md flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl">
+                        🔱
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 rounded-full bg-white/30 text-[10px] font-black tracking-widest uppercase">Maha Kumbh 2026 Protocol</span>
+                            <span id="protocol-badge" class="px-2 py-0.5 rounded-full bg-emerald-400 text-slate-900 text-[10px] font-bold">Standard Day Protocol Active</span>
+                        </div>
+                        <h2 class="text-base font-extrabold mt-0.5">Crowd Surge Early Warning & NDMA Common Alerting Protocol (CAP)</h2>
+                        <p class="text-xs text-orange-100">Synchronized with NDMA SACHET, Prayagraj ICCC, & SDRF River Guard</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 bg-black/20 p-1.5 rounded-xl backdrop-blur-sm">
+                    <button onclick="setFestivalProtocol('normal')" id="proto-btn-normal" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-orange-700 shadow-sm transition">Standard Day</button>
+                    <button onclick="setFestivalProtocol('shahi_snan')" id="proto-btn-shahi" class="px-3 py-1.5 rounded-lg text-xs font-bold text-white hover:bg-white/20 transition flex items-center gap-1.5">
+                        <i class="fas fa-crown text-amber-300"></i>
+                        <span>Shahi Snan (High Alert)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- LIVE CROWD DENSITY SURGE INDEX (CDSI) METRICS -->
+            <div class="bg-white dark:bg-[#111827] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="p-2 rounded-xl bg-orange-100 dark:bg-orange-500/20 text-orange-600">
+                            <i class="fas fa-chart-line text-base"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Kumbh Crowd Density Surge Index (CDSI)</h3>
+                            <p class="text-[10px] text-slate-500">Early-warning telemetry across critical bottlenecks & pontoon bridges</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 text-[11px]">
+                        <span class="flex items-center gap-1 text-emerald-600 font-semibold"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> &lt;2.0/m² Safe</span>
+                        <span class="flex items-center gap-1 text-amber-600 font-semibold"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> 2.0-3.5/m² Warning</span>
+                        <span class="flex items-center gap-1 text-rose-600 font-semibold"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span> &gt;3.5/m² Stampede Risk</span>
+                    </div>
+                </div>
+
+                <!-- SECTORS GRID -->
+                <div id="cdsi-sectors-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- NDMA / ITU-T X.1303 CAP ALERT BROADCASTER & ACTIVE ALERTS -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                <!-- COMPOSER (LEFT) -->
+                <div class="lg:col-span-5 bg-white dark:bg-[#111827] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <div class="flex items-center gap-2.5">
+                            <div class="p-2 rounded-xl bg-rose-100 dark:bg-rose-500/20 text-rose-600">
+                                <i class="fas fa-tower-broadcast text-base"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">NDMA SACHET / CAP Broadcaster</h3>
+                                <p class="text-[10px] text-slate-500">ITU-T X.1303 Standard Common Alerting Protocol v1.2</p>
+                            </div>
+                        </div>
+                        <span class="px-2 py-0.5 rounded bg-rose-50 dark:bg-rose-950/60 text-rose-600 text-[10px] font-mono font-bold">ITU-T X.1303</span>
+                    </div>
+
+                    <!-- PRESET TEMPLATES -->
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1.5 block">Kumbh Quick Presets:</label>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            <button onclick="applyCapPreset('bridge_surge')" class="px-2 py-1.5 rounded-lg text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-orange-50 dark:hover:bg-orange-950 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-left transition truncate">
+                                🌉 Pontoon Bridge Surge
+                            </button>
+                            <button onclick="applyCapPreset('sangam_water')" class="px-2 py-1.5 rounded-lg text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-950 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-left transition truncate">
+                                🌊 Sangam High Current
+                            </button>
+                            <button onclick="applyCapPreset('diversion_active')" class="px-2 py-1.5 rounded-lg text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-left transition truncate">
+                                🔀 Route Diversion Alert
+                            </button>
+                            <button onclick="applyCapPreset('fire_smoke')" class="px-2 py-1.5 rounded-lg text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-left transition truncate">
+                                🔥 Camp Fire / Hazard
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- CAP FIELDS -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[10px] font-bold uppercase text-slate-500 block mb-1">Severity</label>
+                            <select id="cap-severity" class="w-full text-xs font-semibold px-2.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                                <option value="Extreme">Extreme (अत्यधिक)</option>
+                                <option value="Severe" selected>Severe (गंभीर)</option>
+                                <option value="Moderate">Moderate (मध्यम)</option>
+                                <option value="Minor">Minor (सामान्य)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold uppercase text-slate-500 block mb-1">Urgency</label>
+                            <select id="cap-urgency" class="w-full text-xs font-semibold px-2.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                                <option value="Immediate" selected>Immediate (तत्काल)</option>
+                                <option value="Expected">Expected (प्रत्याशित)</option>
+                                <option value="Future">Future (भावी)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] font-bold uppercase text-slate-500 block mb-1">English Headline</label>
+                        <input id="cap-headline-en" type="text" placeholder="e.g. Critical Crowd Bottleneck at Pontoon Bridge 4" class="w-full text-xs px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] font-bold uppercase text-slate-500 block mb-1">Hindi Headline (हिन्दी शीर्षक)</label>
+                        <input id="cap-headline-hi" type="text" placeholder="उदा. पांटून पुल संख्या 4 पर अत्यधिक भीड़ - तुरंत मार्ग बदलें" class="w-full text-xs px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] font-bold uppercase text-slate-500 block mb-1">Target Sectors / Area</label>
+                        <input id="cap-area-desc" type="text" value="Sector 3 & 4 (Pontoon 3-4), Prayagraj Sangam" class="w-full text-xs px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                    </div>
+
+                    <div class="flex gap-2 pt-1">
+                        <button onclick="broadcastCapAlert()" class="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md shadow-rose-600/30 transition flex items-center justify-center gap-2">
+                            <i class="fas fa-bullhorn"></i>
+                            <span>Broadcast CAP Alert</span>
+                        </button>
+                        <button onclick="downloadCapJson()" class="px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-bold text-xs border border-slate-200 dark:border-slate-700 transition" title="Export ITU-T CAP JSON">
+                            <i class="fas fa-file-code"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ACTIVE CAP ALERTS FEED (RIGHT) -->
+                <div class="lg:col-span-7 bg-white dark:bg-[#111827] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <div class="flex items-center gap-2.5">
+                            <div class="p-2 rounded-xl bg-amber-100 dark:bg-amber-500/20 text-amber-600">
+                                <i class="fas fa-satellite-dish text-base"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Active CAP Alerts Log (सक्रिय आपदा चेतावनियाँ)</h3>
+                                <p class="text-[10px] text-slate-500">Live alerts broadcasted to all citizen apps & mesh radio relays</p>
+                            </div>
+                        </div>
+                        <span id="active-cap-count" class="px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-600 font-black text-xs">1 Active</span>
+                    </div>
+
+                    <div id="active-cap-list" class="space-y-3 overflow-y-auto custom-scroll max-h-[500px]">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- IMAGE & DETAILS MODAL -->
+    <div id="image-modal" class="hidden fixed inset-0 z-[2100] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm" onclick="closeImageModal()">
+        <div class="relative max-w-2xl w-full bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl" onclick="event.stopPropagation()">
+            <button onclick="closeImageModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white text-xl">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="flex flex-col gap-4">
+                <div class="w-full max-h-[60vh] bg-slate-100 dark:bg-black/60 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 flex items-center justify-center p-2">
+                    <img id="full-image" src="" class="max-w-full max-h-[55vh] object-contain rounded-lg">
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-orange-600" id="image-title">Incident Details</h3>
+                    <p class="text-xs text-slate-600 dark:text-slate-300 mt-1" id="image-desc">No description.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+        // Fallback dummy socket if socket.io is unavailable
+        if (typeof io === 'undefined') {
+            window.io = () => ({ on: () => {}, emit: () => {}, connected: false });
+        }
+        // --- 1. THEME TOGGLE (LIGHT MODE DEFAULT) ---
+        function initTheme() {
+            const savedTheme = localStorage.getItem('suraksha_theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+        initTheme();
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('suraksha_theme', isDark ? 'dark' : 'light');
+            updateMapTiles(isDark);
+        }
+
+        // --- 2. LOCALIZATION ---
+        const translations = {
+            en: {
+                admin_subtitle: "Maha Kumbh Central Command & Strategic Crowd Safety Network",
+                tab_live_ops: "Live Map & Operations",
+                tab_resources: "Resource Allocation & Logistics",
+                tab_incidents: "Incident Command & Triage",
+                tab_lost_volunteers: "Lost Persons & Volunteers"
+            },
+            hi: {
+                admin_subtitle: "महाकुंभ केंद्रीय कमान एवं सामरिक जन-सुरक्षा नेटवर्क",
+                tab_live_ops: "लाइव मैप व ऑपरेशन्स",
+                tab_resources: "संसाधन आवंटन एवं रसद",
+                tab_incidents: "घटना नियंत्रण व ट्राइएज",
+                tab_lost_volunteers: "खोया-पाया व सेवादार"
+            },
+            mr: {
+                admin_subtitle: "महाकुंभ आपत्ती व गर्दी व्यवस्थापन नियंत्रण कक्ष",
+                tab_live_ops: "लाइव्ह नकाशा",
+                tab_resources: "संसाधन वाटप",
+                tab_incidents: "घटना नोंद",
+                tab_lost_volunteers: "हरवलेले व स्वयंसेवक"
+            },
+            bn: {
+                admin_subtitle: "মহাকুম্ভ ভিড় নিয়ন্ত্রণ ও কৌশলগত সুরক্ষা ব্যবস্থা",
+                tab_live_ops: "লাইভ ম্যাপ",
+                tab_resources: "সম্পদ বরাদ্দ",
+                tab_incidents: "ঘটনা লগ",
+                tab_lost_volunteers: "নিখোঁজ ও স্বেচ্ছাসেবক"
+            },
+            ta: {
+                admin_subtitle: "மகாகும்ப மேளா மையக் கட்டளை & கூட்ட பாதுகாப்பு வலைப்பின்னல்",
+                tab_live_ops: "நேரடி வரைபடம்",
+                tab_resources: "வளம் ஒதுக்கீடு",
+                tab_incidents: "சம்பவ கட்டளை",
+                tab_lost_volunteers: "காணாமல் போனோர்"
+            },
+            te: {
+                admin_subtitle: "మహాకుంభ కేంద్ర కమాండ్ & జనసమూహ భద్రతా నెట్‌వర్క్",
+                tab_live_ops: "లైవ్ మ్యాప్",
+                tab_resources: "వనరుల కేటాయింపు",
+                tab_incidents: "సంఘటన కమాండ్",
+                tab_lost_volunteers: "తప్పిపోయినవారు"
+            },
+            gu: {
+                admin_subtitle: "મહાકુંભ કેન્દ્રીય આદેશ & ભીડ સુરક્ષા નેટવર્ક",
+                tab_live_ops: "લાઇવ નકશો",
+                tab_resources: "સંસાધન ફાળવણી",
+                tab_incidents: "ઘટના આદેશ",
+                tab_lost_volunteers: "ગુમ-પ્રાપ્ત"
+            },
+            pa: {
+                admin_subtitle: "ਮਹਾਕੁੰਭ ਕੇਂਦਰੀ ਕਮਾਂਡ ਅਤੇ ਭੀੜ ਸੁਰੱਖਿਆ ਨੈੱਟਵਰਕ",
+                tab_live_ops: "ਲਾਈਵ ਨਕਸ਼ਾ",
+                tab_resources: "ਸਾਧਨ ਵੰਡ",
+                tab_incidents: "ਘਟਨਾ ਕਮਾਂਡ",
+                tab_lost_volunteers: "ਗੁੰਮ ਵਿਅਕਤੀ"
+            }
+        };
+
+        function changeLanguage(lang) {
+            const t = translations[lang] || translations.hi;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key]) el.innerText = t[key];
+            });
+            const sel = document.getElementById('admin-lang-select');
+            if (sel) sel.value = lang;
+        }
+
+        // Admin toast (no blocking alert())
+        function showAdminToast(msg, type = 'info') {
+            let container = document.getElementById('admin-toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'admin-toast-container';
+                container.className = 'fixed top-20 right-4 z-[3500] flex flex-col gap-2 max-w-sm pointer-events-none';
+                document.body.appendChild(container);
+            }
+            const bg = type === 'error' ? 'bg-red-600' : type === 'success' ? 'bg-emerald-600' : 'bg-slate-900';
+            const icon = type === 'error' ? 'fa-exclamation-circle text-red-200' : type === 'success' ? 'fa-check-circle text-emerald-200' : 'fa-info-circle text-orange-300';
+            const toast = document.createElement('div');
+            toast.className = `${bg} text-white text-xs font-bold px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2.5 pointer-events-auto transition-all opacity-0`;
+            toast.innerHTML = `<i class="fas ${icon}"></i><span class="flex-grow">${msg}</span>`;
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.remove('opacity-0'));
+            setTimeout(() => { toast.style.opacity = 0; setTimeout(() => toast.remove(), 400); }, 4000);
+        }
+
+        // --- 3. TAB NAVIGATION ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById(tabId);
+            if (target) target.classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700";
+            });
+
+            const activeBtn = document.getElementById(tabId.replace('tab-', 'nav-btn-'));
+            if (activeBtn) {
+                activeBtn.className = "tab-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-orange-600 text-white shadow-sm shadow-orange-600/20";
+            }
+
+            if (tabId === 'tab-live-ops' && map) {
+                setTimeout(() => map.invalidateSize(), 150);
+            }
+        }
+
+        // --- 4. MAP SETUP (100% WATERMARK-FREE TILES) ---
+        let map;
+        let currentTileLayer;
+        const PRAYAGRAJ_SANGAM = [25.4300, 81.8800];
+
+        function initAdminMap() {
+            if (map) return;
+            const container = document.getElementById('admin-map');
+            if (!container) return;
+
+            map = L.map('admin-map', {
+                center: PRAYAGRAJ_SANGAM,
+                zoom: 13,
+                zoomControl: true
+            });
+
+            const isDark = document.documentElement.classList.contains('dark');
+            updateMapTiles(isDark);
+
+            // Add Triveni Sangam landmark marker
+            const sangamMarker = L.marker(PRAYAGRAJ_SANGAM, {
+                icon: L.divIcon({
+                    className: '',
+                    html: '<div class="w-8 h-8 rounded-full bg-orange-500 text-white border-2 border-white shadow-lg flex items-center justify-center font-bold text-xs"><i class="fas fa-om"></i></div>',
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16]
+                })
+            }).addTo(map);
+            sangamMarker.bindPopup("<b>Triveni Sangam (त्रिवेणी संगम)</b><br>Prayagraj Maha Kumbh Central Bathing Ghat");
+        }
+
+        function updateMapTiles(isDark) {
+            if (!map) return;
+            if (currentTileLayer) map.removeLayer(currentTileLayer);
+
+            // Clean, fast, watermark-free OpenStreetMap & Esri Street tiles
+            const tileUrl = isDark
+                ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                : 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
+
+            const attribution = isDark
+                ? '&copy; Esri World Imagery'
+                : '&copy; Esri & OpenStreetMap contributors';
+
+            currentTileLayer = L.tileLayer(tileUrl, {
+                attribution: attribution,
+                maxZoom: 19
+            }).addTo(map);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initAdminMap);
+        } else {
+            initAdminMap();
+        }
+
+        function setMapMode(mode) {
+            const m2d = document.getElementById('admin-map');
+            const m3d = document.getElementById('admin-map-3d');
+            const b2d = document.getElementById('btn-map-2d');
+            const b3d = document.getElementById('btn-map-3d');
+            if (!m2d || !m3d) return;
+
+            if (mode === '3d') {
+                m2d.classList.add('hidden');
+                m3d.classList.remove('hidden');
+                if (b3d) b3d.className = "px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white dark:bg-slate-700 text-orange-600 dark:text-orange-400 shadow-sm flex items-center gap-1 transition";
+                if (b2d) b2d.className = "px-2.5 py-1 rounded-lg text-[10px] font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white flex items-center gap-1 transition";
+            } else {
+                m3d.classList.add('hidden');
+                m2d.classList.remove('hidden');
+                if (b2d) b2d.className = "px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white dark:bg-slate-700 text-orange-600 dark:text-orange-400 shadow-sm flex items-center gap-1 transition";
+                if (b3d) b3d.className = "px-2.5 py-1 rounded-lg text-[10px] font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white flex items-center gap-1 transition";
+                if (map) setTimeout(() => map.invalidateSize(), 150);
+            }
+        }
+
+        // --- 5. TRUE OFFLINE MESH NETWORK & PEER-TO-PEER ENGINE ---
+        const MESH_NODE_ID = 'COMMAND-GATEWAY-' + Math.floor(Math.random() * 900) + 100;
+        const meshChannel = new BroadcastChannel('suraksha_kumbh_mesh');
+        const handledPackets = new Set();
+        let relayedPacketsCount = 0;
+        let meshPeers = {};
+
+        // Listen on local BroadcastChannel (Works 100% without internet across tabs/windows)
+        meshChannel.onmessage = (event) => {
+            const packet = event.data;
+            handleMeshPacket(packet, 'BroadcastChannel (P2P Mesh)');
+        };
+
+        // Socket.IO local broker (Works over Wi-Fi router / Hotspot without internet)
+        const socket = io();
+        socket.emit('identify', { type: 'ADMIN', nodeId: MESH_NODE_ID, role: 'Central Command' });
+
+        socket.on('MESH_PACKET', (packet) => {
+            handleMeshPacket(packet, 'Local Wi-Fi Mesh Relay');
+        });
+
+        socket.on('MESH_PEERS_UPDATE', (peers) => {
+            updateMeshPeersList(peers);
+        });
+
+        function handleMeshPacket(packet, transport = 'P2P') {
+            if (!packet || !packet.packetId) return;
+            if (handledPackets.has(packet.packetId)) return;
+            handledPackets.add(packet.packetId);
+
+            relayedPacketsCount++;
+            const countEl = document.getElementById('mesh-packets-count');
+            if (countEl) countEl.innerText = relayedPacketsCount;
+
+            logMeshTerminal(`[HOP ${packet.hops}] RX via ${transport}: [${packet.type}] from ${packet.originNode} | Path: ${packet.relayPath.join(' -> ')}`);
+
+            // If it's an emergency SOS or Aid Request relayed over the mesh
+            if (packet.type === 'SOS' || packet.type === 'HELP_REQUEST' || packet.type === 'MEDICAL_REPORT') {
+                handleIncomingEvent(packet.type, {
+                    userId: packet.originNode,
+                    type: packet.type,
+                    details: `[MESH RELAY] ${packet.payload}`,
+                    location: packet.location,
+                    time: new Date(packet.timestamp).toLocaleTimeString()
+                });
+
+                // Acknowledge back through the mesh
+                const ackPacket = {
+                    packetId: 'ACK-' + packet.packetId,
+                    originNode: MESH_NODE_ID,
+                    type: 'MESH_ACK',
+                    targetNode: packet.originNode,
+                    hops: 0,
+                    relayPath: [MESH_NODE_ID],
+                    timestamp: Date.now()
+                };
+                meshChannel.postMessage(ackPacket);
+                socket.emit('MESH_PACKET', ackPacket);
+            }
+        }
+
+        function broadcastMeshPing() {
+            const pingPacket = {
+                packetId: 'PING-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                originNode: MESH_NODE_ID,
+                type: 'MESH_PING',
+                payload: 'Tactical Gateway Heartbeat Ping',
+                hops: 0,
+                relayPath: [MESH_NODE_ID],
+                timestamp: Date.now()
+            };
+            meshChannel.postMessage(pingPacket);
+            socket.emit('MESH_PACKET', pingPacket);
+            logMeshTerminal(`&gt;&gt; TX [PING]: Broadcasted packet ${pingPacket.packetId} into mesh...`);
+            showAdminToast("📡 Mesh Ping sent!", 'info');
+        }
+
+        function logMeshTerminal(msg) {
+            const logEl = document.getElementById('mesh-terminal-log');
+            if (!logEl) return;
+            const line = document.createElement('div');
+            line.innerHTML = `&gt;&gt; ${new Date().toLocaleTimeString()} ${msg}`;
+            logEl.appendChild(line);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function updateMeshPeersList(peers) {
+            const container = document.getElementById('mesh-nodes-list');
+            const countEl = document.getElementById('mesh-peer-count');
+            if (countEl) countEl.innerText = peers ? peers.length : 1;
+            if (!container) return;
+
+            let html = `
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between text-xs">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                        <div>
+                            <div class="font-bold text-slate-900 dark:text-white">${MESH_NODE_ID}</div>
+                            <div class="text-[10px] text-slate-500">Central Gateway Node • Root</div>
+                        </div>
+                    </div>
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Root</span>
+                </div>
+            `;
+
+            if (peers && peers.length > 0) {
+                peers.forEach(p => {
+                    if (p.nodeId !== MESH_NODE_ID) {
+                        html += `
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between text-xs">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-2.5 h-2.5 rounded-full bg-cyan-500"></div>
+                                    <div>
+                                        <div class="font-bold text-slate-900 dark:text-white">${p.nodeId || p.userId}</div>
+                                        <div class="text-[10px] text-slate-500">Mesh Peer • 1 Hop • RSSI -62 dBm</div>
+                                    </div>
+                                </div>
+                                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-100 text-cyan-800 font-bold">Connected</span>
+                            </div>
+                        `;
+                    }
+                });
+            }
+            container.innerHTML = html;
+        }
+
+        // --- 6. OVERHAULED RESOURCE ALLOCATION CATALOG ---
+        const resourceCatalog = {
+            water: { id: 'water', name: 'Drinking Water & ORS', nameHi: 'पेयजल एवं ओआरएस', icon: 'fa-bottle-water', color: 'text-blue-500', avail: 5000, max: 5000, req: 0, unit: 'packs' },
+            food: { id: 'food', name: 'Food & Mahaprasad Meals', nameHi: 'अन्न एवं प्रसाद', icon: 'fa-bowl-rice', color: 'text-amber-500', avail: 3500, max: 3500, req: 0, unit: 'meals' },
+            ambulance: { id: 'ambulance', name: 'Ambulances & QRT Teams', nameHi: 'एम्बुलेंस एवं त्वरित दल', icon: 'fa-truck-medical', color: 'text-red-500', avail: 40, max: 40, req: 0, unit: 'units' },
+            medkit: { id: 'medkit', name: 'Emergency First Aid Kits', nameHi: 'प्राथमिक चिकित्सा किट', icon: 'fa-kit-medical', color: 'text-emerald-500', avail: 1200, max: 1200, req: 0, unit: 'kits' },
+            blanket: { id: 'blanket', name: 'Warm Woolen Blankets', nameHi: 'शीत निवारक ऊनी कंबल', icon: 'fa-rug', color: 'text-purple-500', avail: 2500, max: 2500, req: 0, unit: 'pieces' },
+            lifejacket: { id: 'lifejacket', name: 'Life Jackets & Rescue Boats', nameHi: 'लाइफ जैकेट व बचाव नौका', icon: 'fa-life-ring', color: 'text-cyan-500', avail: 350, max: 350, req: 0, unit: 'sets' },
+            barrier: { id: 'barrier', name: 'Crowd Barriers & Megaphones', nameHi: 'भीड़ नियंत्रण बैरियर', icon: 'fa-road-barrier', color: 'text-orange-500', avail: 600, max: 600, req: 0, unit: 'units' }
+        };
+
+        const pendingAidRequests = [];
+        const activeUsers = {};
+        const incidentStore = {};
+        let triageCounts = { critical: 0, moderate: 0, minor: 0 };
+        let hasCentered = false;
+
+        function renderResourceCards() {
+            const container = document.getElementById('resource-cards-container');
+            if (!container) return;
+
+            let html = '';
+            for (const key in resourceCatalog) {
+                const res = resourceCatalog[key];
+                const pct = Math.round((res.avail / res.max) * 100);
+                const barColor = pct > 40 ? 'bg-emerald-500' : (pct > 15 ? 'bg-amber-500' : 'bg-red-500');
+
+                html += `
+                    <div class="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between gap-3">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <div class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 ${res.color} text-sm">
+                                        <i class="fas ${res.icon}"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-bold text-slate-900 dark:text-white">${res.name}</h4>
+                                        <p class="text-[10px] text-slate-500">${res.nameHi}</p>
+                                    </div>
+                                </div>
+                                <span class="text-[10px] font-mono px-2 py-0.5 rounded-full ${res.req > 0 ? 'bg-red-100 text-red-700 font-bold' : 'bg-slate-100 text-slate-500'}">
+                                    Req: ${res.req}
+                                </span>
+                            </div>
+
+                            <div class="mt-3 flex items-baseline justify-between">
+                                <div>
+                                    <span class="text-2xl font-mono font-black text-slate-900 dark:text-white">${res.avail.toLocaleString()}</span>
+                                    <span class="text-[10px] text-slate-500">/ ${res.max.toLocaleString()} ${res.unit}</span>
+                                </div>
+                                <span class="text-xs font-mono font-bold ${pct < 20 ? 'text-red-500' : 'text-slate-600 dark:text-slate-400'}">${pct}%</span>
+                            </div>
+
+                            <div class="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 mt-2 overflow-hidden">
+                                <div class="h-full rounded-full transition-all duration-300 ${barColor}" style="width: ${pct}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                            <button onclick="dispatchResourceDirect('${res.id}', 50)"
+                                class="flex-1 bg-orange-600 hover:bg-orange-500 text-white py-1.5 rounded-lg text-[10px] font-bold transition flex items-center justify-center gap-1 shadow-sm">
+                                <i class="fas fa-truck-fast"></i> Dispatch
+                            </button>
+                            <button onclick="restockResource('${res.id}', 100)"
+                                class="px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 py-1.5 rounded-lg text-[10px] font-bold border border-slate-200 dark:border-slate-700 transition">
+                                +100
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        function dispatchResourceDirect(resourceId, quantity = 50) {
+            const res = resourceCatalog[resourceId];
+            if (!res) return;
+            if (res.avail <= 0) {
+                showAdminToast(`❌ ${res.name} is out of stock!`, 'error');
+                return;
+            }
+
+            const dispatchQty = Math.min(res.avail, quantity);
+            res.avail -= dispatchQty;
+            if (res.req > 0) res.req = Math.max(0, res.req - dispatchQty);
+
+            renderResourceCards();
+            updateKPIs();
+            logDispatch(`Direct Dispatch: ${dispatchQty} ${res.unit} of ${res.name} sent to field`);
+
+            socket.emit('RESOURCE_DISPATCHED', {
+                resourceId: resourceId,
+                resourceName: res.name,
+                quantity: dispatchQty,
+                time: new Date().toLocaleTimeString()
+            });
+        }
+
+        function restockResource(resourceId, amount = 100) {
+            const res = resourceCatalog[resourceId];
+            if (!res) return;
+            res.avail = Math.min(res.max, res.avail + amount);
+            renderResourceCards();
+            updateKPIs();
+            logDispatch(`📦 Stock added: +${amount} ${res.unit} of ${res.name}`);
+        }
+
+        function restockAllResources() {
+            for (const key in resourceCatalog) resourceCatalog[key].avail = resourceCatalog[key].max;
+            renderResourceCards();
+            updateKPIs();
+            logDispatch("📦 Complete Inventory Restocked to 100% capacity.");
+        }
+
+        function smartAutoAllocate() {
+            if (pendingAidRequests.length === 0) {
+                showAdminToast("✅ All requests fulfilled!", 'success');
+                return;
+            }
+
+            let count = 0;
+            pendingAidRequests.forEach(req => {
+                if (req.status === 'Pending') {
+                    const resKey = resolveResourceKey(req.item);
+                    const res = resourceCatalog[resKey];
+                    if (res && res.avail >= req.quantity) {
+                        res.avail -= req.quantity;
+                        res.req = Math.max(0, res.req - req.quantity);
+                        req.status = 'Dispatched';
+                        count++;
+
+                        socket.emit('RESOURCE_DISPATCHED', {
+                            targetUserId: req.userId,
+                            resourceName: res.name,
+                            quantity: req.quantity,
+                            location: req.location,
+                            time: new Date().toLocaleTimeString()
+                        });
+                        logDispatch(`Auto-Allocated: ${req.quantity}x ${res.name} to ${req.userId}`);
+                    }
+                }
+            });
+
+            renderResourceCards();
+            renderRequestsQueue();
+            updateKPIs();
+            showAdminToast(`⚡ Auto-Allocate complete —  requests dispatched!`, 'success');
+        }
+
+        function resolveResourceKey(text = '') {
+            const lower = text.toLowerCase();
+            if (lower.includes('water') || lower.includes('pani') || lower.includes('jal')) return 'water';
+            if (lower.includes('food') || lower.includes('prasad') || lower.includes('ration')) return 'food';
+            if (lower.includes('ambulance') || lower.includes('doctor')) return 'ambulance';
+            if (lower.includes('medical') || lower.includes('first aid') || lower.includes('dawa')) return 'medkit';
+            if (lower.includes('blanket') || lower.includes('kambal')) return 'blanket';
+            if (lower.includes('lifejacket') || lower.includes('boat')) return 'lifejacket';
+            return 'barrier';
+        }
+
+        function renderRequestsQueue() {
+            const container = document.getElementById('requests-queue-container');
+            const noMsg = document.getElementById('no-requests-msg');
+            const pendingCountEl = document.getElementById('pending-requests-count');
+            const badge = document.getElementById('tab-req-badge');
+
+            const pendingOnes = pendingAidRequests.filter(r => r.status === 'Pending');
+            if (pendingCountEl) pendingCountEl.innerText = `${pendingOnes.length} Pending`;
+            if (badge) {
+                if (pendingOnes.length > 0) {
+                    badge.innerText = pendingOnes.length;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
+
+            if (pendingAidRequests.length === 0) {
+                if (noMsg) noMsg.style.display = 'block';
+                return;
+            }
+            if (noMsg) noMsg.style.display = 'none';
+
+            let html = '';
+            pendingAidRequests.slice(-15).reverse().forEach(req => {
+                const isPending = req.status === 'Pending';
+                html += `
+                    <div class="p-3 rounded-xl ${isPending ? 'bg-orange-50 dark:bg-slate-800/80 border border-orange-200 dark:border-orange-500/30' : 'bg-slate-50 dark:bg-slate-900/50 border border-slate-200'} flex items-center justify-between gap-3 text-xs">
+                        <div class="flex items-center gap-2.5">
+                            <div class="p-2 rounded-lg ${isPending ? 'bg-orange-100 text-orange-600' : 'bg-emerald-100 text-emerald-600'}">
+                                <i class="fas ${isPending ? 'fa-clock' : 'fa-check'}"></i>
+                            </div>
+                            <div>
+                                <div class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <span>${req.quantity}x ${req.item}</span>
+                                    <span class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">${req.userId}</span>
+                                </div>
+                                <div class="text-[10px] text-slate-500 mt-0.5 flex items-center gap-2">
+                                    <span class="cursor-pointer text-blue-600 hover:underline" onclick="panToLocation('${req.location}')">
+                                        <i class="fas fa-map-marker-alt"></i> ${req.location || 'Sangam'}
+                                    </span>
+                                    <span>• ${req.time}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            ${isPending ?
+                            `<button onclick="fulfillSingleRequest('${req.id}')"
+                                class="bg-orange-600 hover:bg-orange-500 text-white font-bold text-[10px] px-3 py-1.5 rounded-lg transition shadow-sm">
+                                Approve & Dispatch
+                             </button>` :
+                            `<span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-1 rounded-md">Dispatched</span>`
+                            }
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function fulfillSingleRequest(reqId) {
+            const req = pendingAidRequests.find(r => r.id === reqId);
+            if (!req) return;
+            const resKey = resolveResourceKey(req.item);
+            const res = resourceCatalog[resKey];
+
+            if (res && res.avail < req.quantity) {
+                showAdminToast(`❌ Insufficient: ${res.name}`, 'error');
+                return;
+            }
+
+            if (res) {
+                res.avail -= req.quantity;
+                res.req = Math.max(0, res.req - req.quantity);
+            }
+            req.status = 'Dispatched';
+            renderResourceCards();
+            renderRequestsQueue();
+            updateKPIs();
+
+            socket.emit('RESOURCE_DISPATCHED', {
+                targetUserId: req.userId,
+                resourceName: res ? res.name : req.item,
+                quantity: req.quantity,
+                location: req.location,
+                time: new Date().toLocaleTimeString()
+            });
+
+            logDispatch(`Dispatched: ${req.quantity}x ${req.item} to ${req.userId}`);
+        }
+
+        function logDispatch(msg) {
+            const list = document.getElementById('dispatch-log-list');
+            if (!list) return;
+            const item = document.createElement('div');
+            item.className = "p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-700 dark:text-slate-300";
+            item.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-truck-fast text-orange-600 text-xs"></i>
+                    <span>${msg}</span>
+                </div>
+                <span class="font-mono text-[10px] text-slate-400 shrink-0">${new Date().toLocaleTimeString()}</span>
+            `;
+            list.prepend(item);
+        }
+
+        function updateKPIs() {
+            const critEl = document.getElementById('kpi-critical');
+            if (critEl) critEl.innerText = triageCounts.critical;
+            const reqEl = document.getElementById('kpi-requests');
+            const pendingOnes = pendingAidRequests.filter(r => r.status === 'Pending');
+            if (reqEl) reqEl.innerText = pendingOnes.length;
+        }
+
+        // --- 7. FIELD SIGNALS & INCIDENTS ---
+        const events = [
+            'LOCATION_UPDATE', 'SOS', 'TRIAGE_REPORT', 'MEDICAL_REPORT',
+            'RESOURCE_UPDATE', 'RESOURCE_DISPATCHED', 'DISASTER_ALERT', 'DISASTER_CLEAR',
+            'HELP_REQUEST', 'VOLUNTEER_JOIN', 'FOUND_PERSON', 'MISSING_PERSON',
+            'DAMAGE_REPORT', 'LOST_ITEM', 'SOS_ACKNOWLEDGE', 'SOS_RESOLVE'
+        ];
+
+        events.forEach(evt => {
+            socket.on(evt, (data) => handleIncomingEvent(evt, data));
+        });
+
+        socket.on('ACTIVE_USERS_COUNT', (count) => {
+            const el = document.getElementById('active-users');
+            if (el) el.innerText = count;
+        });
+
+        socket.on('DISASTER_FEED_UPDATE', (data) => {
+            if (data.river) {
+                const el = document.getElementById('feed-river');
+                if (el) el.innerText = data.river;
+            }
+            if (data.cyclone) {
+                const el = document.getElementById('feed-cyclone');
+                if (el) el.innerText = data.cyclone;
+                const weatherStatus = document.getElementById('feed-weather-status');
+                if (weatherStatus) weatherStatus.innerText = data.cyclone;
+            }
+            if (data.fire) {
+                const el = document.getElementById('feed-fire');
+                if (el) el.innerText = data.fire;
+            }
+        });
+
+        function handleIncomingEvent(evtType, data) {
+            if (!data) return;
+
+            if (data.location) updateMapPosition(data);
+
+            if (evtType === 'HELP_REQUEST' || data.type === 'HELP_REQUEST') {
+                const qty = parseInt(data.quantity) || 1;
+                const itemDesc = data.details || 'Emergency Supplies';
+                const resKey = resolveResourceKey(itemDesc);
+                if (resourceCatalog[resKey]) resourceCatalog[resKey].req += qty;
+
+                pendingAidRequests.push({
+                    id: 'req-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                    userId: data.userId || 'Pilgrim',
+                    item: itemDesc,
+                    quantity: qty,
+                    location: data.location || 'Sangam Area',
+                    time: data.time || new Date().toLocaleTimeString(),
+                    status: 'Pending'
+                });
+
+                renderResourceCards();
+                renderRequestsQueue();
+                updateKPIs();
+            }
+
+            if (evtType === 'MEDICAL_REPORT' || data.type === 'MEDICAL_REPORT' || evtType === 'SOS' || data.type === 'SOS') {
+                const sev = (data.severity || (data.type === 'SOS' ? 'critical' : 'minor')).toLowerCase();
+                if (triageCounts[sev] !== undefined) {
+                    triageCounts[sev]++;
+                    const countEl = document.getElementById(`count-${sev}`);
+                    if (countEl) countEl.innerText = triageCounts[sev];
+                    const cardEl = document.getElementById(`triage-card-${sev}`);
+                    if (cardEl) cardEl.innerText = triageCounts[sev];
+                }
+                updateKPIs();
+            }
+
+            if (evtType === 'MISSING_PERSON' || data.type === 'MISSING_PERSON') addMissingPersonCard(data);
+            if (evtType === 'VOLUNTEER_JOIN' || data.type === 'VOLUNTEER_JOIN') addVolunteerCard(data);
+            if (evtType !== 'LOCATION_UPDATE') addIncidentRecord(data);
+        }
+
+        function addIncidentRecord(data) {
+            const table = document.getElementById('incident-table');
+            const fullTable = document.getElementById('full-incident-table');
+            const rowId = 'inc-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+            incidentStore[rowId] = data;
+
+            let badge = 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+            if (data.type === 'SOS') badge = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 font-bold animate-pulse';
+            else if (data.type === 'MEDICAL_REPORT') badge = 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 font-bold';
+            else if (data.type === 'MISSING_PERSON') badge = 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 font-bold';
+
+            const row = `
+                <tr id="${rowId}" class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
+                    <td class="py-2.5 px-3 font-mono text-slate-500">${data.time || new Date().toLocaleTimeString()}</td>
+                    <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] ${badge}">${data.type || 'SIGNAL'}</span></td>
+                    <td class="py-2.5 px-3">
+                        <div class="font-bold text-slate-900 dark:text-white">${data.userId || 'Pilgrim'}</div>
+                        <div class="text-[11px] text-slate-500">${data.details || '-'}</div>
+                        ${data.image ? `<button onclick="showStoredImage('${rowId}')" class="text-[10px] text-orange-600 hover:underline mt-0.5"><i class="fas fa-image"></i> View Photo</button>` : ''}
+                    </td>
+                    <td class="py-2.5 px-3 font-mono text-blue-600 hover:underline cursor-pointer" onclick="panToLocation('${data.location}')">
+                        <i class="fas fa-map-marker-alt"></i> ${data.location || 'N/A'}
+                    </td>
+                    <td class="py-2.5 px-3 text-right">
+                        ${data.type === 'SOS' || data.type === 'MEDICAL_REPORT' ?
+                        `<button id="btn-${rowId}" onclick="acknowledgeIncident('${data.userId}', 'btn-${rowId}', '${rowId}')"
+                            class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-[10px] px-2.5 py-1 rounded transition">
+                            Acknowledge
+                         </button>` :
+                        '<span class="text-slate-400 text-[10px]">Logged</span>'
+                        }
+                    </td>
+                </tr>
+            `;
+
+            if (table) table.insertAdjacentHTML('afterbegin', row);
+            if (fullTable) {
+                const fullRow = row.replace('</td>', `</td><td class="py-2.5 px-3"><span class="text-emerald-600 text-[10px] font-bold">Active</span></td>`);
+                fullTable.insertAdjacentHTML('afterbegin', fullRow);
+            }
+        }
+
+        function acknowledgeIncident(userId, btnId, rowId) {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-check"></i> Solved';
+                btn.className = "bg-emerald-600 text-white font-bold text-[10px] px-2.5 py-1 rounded";
+                btn.onclick = () => resolveIncident(userId, rowId);
+            }
+            socket.emit('SOS_ACKNOWLEDGE', { userId: userId, time: new Date().toLocaleTimeString() });
+        }
+
+        function resolveIncident(userId, rowId) {
+            const row = document.getElementById(rowId);
+            if (row) row.classList.add('opacity-40');
+            socket.emit('SOS_RESOLVE', { userId: userId, time: new Date().toLocaleTimeString() });
+            if (activeUsers[userId] && activeUsers[userId].marker) {
+                activeUsers[userId].marker.setStyle({ color: '#22c55e', fillColor: '#22c55e' });
+            }
+        }
+
+        function panToLocation(locStr) {
+            if (!map) initAdminMap();
+            if (!map || !locStr || !locStr.includes(',')) return;
+            const parts = locStr.split(',').map(Number);
+            if (!isNaN(parts[0]) && !isNaN(parts[1])) {
+                map.setView(parts, 16);
+            }
+        }
+
+        function updateMapPosition(data) {
+            if (!map) initAdminMap();
+            if (!map || !data.location || !data.location.includes(',')) return;
+            const [rawLat, rawLng] = data.location.split(',').map(Number);
+            if (isNaN(rawLat) || isNaN(rawLng)) return;
+
+            if (!hasCentered) {
+                map.setView([rawLat, rawLng], 14);
+                hasCentered = true;
+            }
+
+            const lat = rawLat;
+            const lng = rawLng;
+
+            let color = '#22c55e';
+            let radius = 6;
+            if (data.type === 'SOS') { color = '#ef4444'; radius = 10; }
+            else if (data.type === 'MISSING_PERSON') { color = '#a855f7'; radius = 8; }
+            else if (data.type === 'MEDICAL_REPORT') { color = '#f59e0b'; radius = 8; }
+            else if (data.type === 'HELP_REQUEST') { color = '#f97316'; radius = 7; }
+
+            if (activeUsers[data.userId]) {
+                const user = activeUsers[data.userId];
+                user.marker.setLatLng([lat, lng]);
+                user.marker.setStyle({ color: color, fillColor: color, radius: radius });
+            } else {
+                const marker = L.circleMarker([lat, lng], {
+                    color: color, fillColor: color, fillOpacity: 0.85, weight: 2, radius: radius
+                }).addTo(map);
+
+                marker.bindPopup(`
+                    <div class="text-xs p-1">
+                        <strong class="text-orange-600">${data.userId || 'Pilgrim'}</strong><br>
+                        <span>${data.type || 'Signal'}</span><br>
+                        <span class="text-slate-500">${data.details || ''}</span>
+                    </div>
+                `);
+                activeUsers[data.userId] = { marker: marker, lastUpdate: Date.now() };
+            }
+
+            const sigCount = document.getElementById('active-count');
+            if (sigCount) sigCount.innerText = Object.keys(activeUsers).length;
+        }
+
+        function addMissingPersonCard(data) {
+            const gallery = document.getElementById('missing-persons-gallery');
+            if (!gallery) return;
+            const card = document.createElement('div');
+            card.className = "bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-purple-200 dark:border-purple-800/40 flex gap-3 items-center";
+            card.innerHTML = `
+                <div class="w-16 h-16 rounded-xl bg-slate-200 dark:bg-slate-700 overflow-hidden shrink-0 border border-purple-300">
+                    ${data.image ? `<img src="${data.image}" class="w-full h-full object-cover">` : '<div class="w-full h-full flex items-center justify-center text-purple-500"><i class="fas fa-user-circle text-2xl"></i></div>'}
+                </div>
+                <div class="text-xs overflow-hidden">
+                    <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-purple-100 text-purple-700">MISSING PERSON</span>
+                    <h4 class="font-bold text-slate-900 dark:text-white truncate mt-1">${data.details || 'Reported Person'}</h4>
+                    <p class="text-[10px] text-slate-500 mt-0.5"><i class="fas fa-map-marker-alt text-purple-500"></i> ${data.location || 'Sangam'}</p>
+                </div>
+            `;
+            gallery.prepend(card);
+        }
+
+        function addVolunteerCard(data) {
+            const roster = document.getElementById('volunteer-roster-list');
+            if (!roster) return;
+            const card = document.createElement('div');
+            card.className = "bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-blue-200 dark:border-blue-800/40 flex gap-3 items-center";
+            card.innerHTML = `
+                <div class="w-12 h-12 rounded-xl bg-slate-200 dark:bg-slate-700 overflow-hidden shrink-0 flex items-center justify-center text-blue-600">
+                    ${data.image ? `<img src="${data.image}" class="w-full h-full object-cover">` : '<i class="fas fa-user-shield text-xl"></i>'}
+                </div>
+                <div class="text-xs flex-grow">
+                    <div class="flex items-center justify-between">
+                        <h4 class="font-bold text-slate-900 dark:text-white">${data.details || 'Volunteer'}</h4>
+                        <span class="text-[9px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">SEVADAR</span>
+                    </div>
+                    <p class="text-[10px] text-slate-500 mt-0.5">Assigned: Sangam Sector 1 • ID: ${data.userId || 'VOL'}</p>
+                </div>
+            `;
+            roster.prepend(card);
+        }
+
+        function declareDisaster() {
+            const type = document.getElementById('disaster-type').value;
+            const zone = document.getElementById('disaster-zone').value;
+
+            socket.emit('DISASTER_ALERT', {
+                type: 'DISASTER_ALERT',
+                alertType: type,
+                zone: zone,
+                time: new Date().toLocaleTimeString()
+            });
+
+            document.getElementById('clear-btn')?.classList.remove('hidden');
+            showAdminToast(`🚨 EMERGENCY BROADCAST SENT: ${type} across ${zone}`, 'error');
+        }
+
+        function clearDisaster() {
+            socket.emit('DISASTER_CLEAR', {
+                type: 'DISASTER_CLEAR',
+                time: new Date().toLocaleTimeString()
+            });
+            document.getElementById('clear-btn')?.classList.add('hidden');
+            showAdminToast("✅ ALL CLEAR SIGNAL SENT.", 'success');
+        }
+
+        function showStoredImage(rowId) {
+            const data = incidentStore[rowId];
+            if (!data || !data.image) return;
+            document.getElementById('full-image').src = data.image;
+            document.getElementById('image-title').innerText = data.type || 'Photo';
+            document.getElementById('image-desc').innerText = data.details || 'No details provided.';
+            document.getElementById('image-modal').classList.remove('hidden');
+        }
+
+        function closeImageModal() {
+            document.getElementById('image-modal').classList.add('hidden');
+        }
+
+        // ========================================================
+        // --- 9. NDMA SACHET / ITU-T X.1303 CAP & CDSI PROTOCOL ---
+        // ========================================================
+        let currentCdsiData = {
+            "sangam-nose": { name: "Sangam Nose (Main Ghat)", density: 3.8, capacity: 85, status: "WARNING", flowRate: "+420/min", sector: 1 },
+            "ram-ghat": { name: "Ram Ghat & Dashashwamedh", density: 2.1, capacity: 55, status: "NORMAL", flowRate: "+180/min", sector: 2 },
+            "pontoon-3": { name: "Pontoon Bridge #3 (Daraganj)", density: 4.1, capacity: 92, status: "CRITICAL", flowRate: "+580/min", sector: 3 },
+            "pontoon-4": { name: "Pontoon Bridge #4 (Jhunsi)", density: 3.9, capacity: 88, status: "WARNING", flowRate: "+490/min", sector: 4 },
+            "arail-ghat": { name: "Arail Ghat (South Bank)", density: 1.4, capacity: 35, status: "NORMAL", flowRate: "+90/min", sector: 6 },
+            "holding-jhunsi": { name: "Jhunsi Holding Paddock", density: 1.1, capacity: 28, status: "BUFFER_READY", flowRate: "-120/min", sector: 8 }
+        };
+
+        let capAlertsStore = [
+            {
+                identifier: "CAP-IN-UP-KUMBH-2026-001",
+                sender: "UP-SDMA-ICCC-PRAYAGRAJ",
+                sent: new Date().toLocaleTimeString(),
+                status: "Actual",
+                msgType: "Alert",
+                info: {
+                    severity: "Severe",
+                    urgency: "Immediate",
+                    headline: "Heavy Crowd Surge at Pontoon Bridge #4 (Ganga)",
+                    headline_hi: "पांटून पुल संख्या 4 पर अत्यधिक भीड़ का दबाव - मार्ग परिवर्तन",
+                    areaDesc: "Sector 3 & 4 (Pontoon 3-4), Prayagraj Sangam",
+                    instruction: "Use southern pedestrian ramp. Do not crowd on floating bridge pontoons."
+                }
+            }
+        ];
+
+        function renderCdsiSectors(metrics) {
+            currentCdsiData = metrics || currentCdsiData;
+            const container = document.getElementById('cdsi-sectors-grid');
+            if (!container) return;
+
+            container.innerHTML = Object.entries(currentCdsiData).map(([secKey, sec]) => {
+                let badgeClass = "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400";
+                let barColor = "bg-emerald-500";
+                let statusLabel = "SAFE FLOW";
+
+                if (sec.density >= 4.0 || sec.status === 'CRITICAL') {
+                    badgeClass = "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 animate-pulse";
+                    barColor = "bg-rose-600";
+                    statusLabel = "CRITICAL BOTTLE-NECK";
+                } else if (sec.density >= 3.0 || sec.status === 'WARNING') {
+                    badgeClass = "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400";
+                    barColor = "bg-amber-500";
+                    statusLabel = "HIGH DENSITY";
+                } else if (sec.status === 'BUFFER_READY') {
+                    badgeClass = "bg-cyan-100 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-400";
+                    barColor = "bg-cyan-500";
+                    statusLabel = "DIVERSION BUFFER READY";
+                } else if (sec.status === 'DIVERTING') {
+                    badgeClass = "bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-400 font-bold";
+                    barColor = "bg-purple-600";
+                    statusLabel = "DIVERSION IN EFFECT";
+                }
+
+                return `
+                    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 flex flex-col justify-between gap-3">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <span class="text-[9px] font-mono px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">Sector ${sec.sector}</span>
+                                <h4 class="font-extrabold text-sm text-slate-900 dark:text-white mt-1">${sec.name}</h4>
+                            </div>
+                            <span class="text-[10px] font-black px-2 py-0.5 rounded-full ${badgeClass}">${statusLabel}</span>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-baseline text-xs mb-1">
+                                <span class="text-slate-500 text-[11px]">Crowd Density</span>
+                                <span class="font-mono font-bold text-slate-800 dark:text-slate-200">${sec.density} <span class="text-[10px] text-slate-400">ppl/m²</span></span>
+                            </div>
+                            <div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                                <div class="${barColor} h-full transition-all duration-500" style="width: ${Math.min(sec.capacity, 100)}%"></div>
+                            </div>
+                            <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                                <span>Capacity: ${sec.capacity}%</span>
+                                <span class="font-mono">${sec.flowRate}</span>
+                            </div>
+                        </div>
+
+                        ${sec.density >= 3.5 ? `
+                            <button onclick="triggerDiversion('${secKey}', 'holding-jhunsi')" class="w-full py-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
+                                <i class="fas fa-shuffle"></i>
+                                <span>Engage Holding Paddock Diversion</span>
+                            </button>
+                        ` : `
+                            <div class="text-[10px] text-slate-400 text-center py-1 bg-slate-100 dark:bg-slate-800/80 rounded-lg">
+                                Flow Nominal • Normal Ingress
+                            </div>
+                        `}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function triggerDiversion(fromKey, toKey) {
+            const fromSec = currentCdsiData[fromKey]?.name || fromKey;
+            const toSec = currentCdsiData[toKey]?.name || toKey;
+
+            const diversionPacket = {
+                type: 'DIVERSION_TRIGGER',
+                fromSector: fromKey,
+                toSector: toKey,
+                reason: 'Crowd density exceeded safe threshold (>3.5 ppl/m²)',
+                time: new Date().toLocaleTimeString()
+            };
+
+            socket.emit('DIVERSION_TRIGGER', diversionPacket);
+
+            // Also broadcast across offline mesh channel
+            if (typeof meshChannel !== 'undefined') {
+                meshChannel.postMessage({
+                    packetId: 'DIV-' + Date.now(),
+                    type: 'DIVERSION_TRIGGER',
+                    fromSector: fromSec,
+                    toSector: toSec,
+                    timestamp: Date.now()
+                });
+            }
+
+            // Local state update
+            if (currentCdsiData[fromKey]) {
+                currentCdsiData[fromKey].status = 'DIVERTING';
+                currentCdsiData[fromKey].density = Math.max(1.8, (currentCdsiData[fromKey].density - 0.8).toFixed(1));
+            }
+            renderCdsiSectors();
+            showAdminToast(`🔀 Diversion active: ${fromSec} → ${toSec}`, 'info');
+        }
+
+        function setFestivalProtocol(mode) {
+            const btnNormal = document.getElementById('proto-btn-normal');
+            const btnShahi = document.getElementById('proto-btn-shahi');
+            const badge = document.getElementById('protocol-badge');
+
+            if (mode === 'shahi_snan') {
+                btnShahi.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-rose-700 shadow-sm transition flex items-center gap-1.5";
+                btnNormal.className = "px-3 py-1.5 rounded-lg text-xs font-bold text-white hover:bg-white/20 transition";
+                badge.innerText = "SHAHI SNAN EMERGENCY PROTOCOL ACTIVE";
+                badge.className = "px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black animate-pulse";
+                showAdminToast("🔱 Shahi Snan Protocol Active — NDRF & Barricades Engaged!", 'error');
+            } else {
+                btnNormal.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-orange-700 shadow-sm transition";
+                btnShahi.className = "px-3 py-1.5 rounded-lg text-xs font-bold text-white hover:bg-white/20 transition flex items-center gap-1.5";
+                badge.innerText = "Standard Day Protocol Active";
+                badge.className = "px-2 py-0.5 rounded-full bg-emerald-400 text-slate-900 text-[10px] font-bold";
+            }
+        }
+
+        function applyCapPreset(preset) {
+            const sevEl = document.getElementById('cap-severity');
+            const urgEl = document.getElementById('cap-urgency');
+            const enEl = document.getElementById('cap-headline-en');
+            const hiEl = document.getElementById('cap-headline-hi');
+            const areaEl = document.getElementById('cap-area-desc');
+
+            if (preset === 'bridge_surge') {
+                sevEl.value = 'Severe';
+                urgEl.value = 'Immediate';
+                enEl.value = 'Pontoon Bridge #4 Surge - Ingress Halted';
+                hiEl.value = 'पांटून पुल संख्या 4 पर अत्यधिक दबाव - प्रवेश रोका गया';
+                areaEl.value = 'Pontoon 4, Daraganj to Jhunsi Corridor';
+            } else if (preset === 'sangam_water') {
+                sevEl.value = 'Extreme';
+                urgEl.value = 'Immediate';
+                enEl.value = 'Sangam Deep Water Currents - Stay Inside Safe Barricades';
+                hiEl.value = 'त्रिवेणी संगम में तेज जलप्रवाह - सुरक्षा रस्सियों के भीतर ही स्नान करें';
+                areaEl.value = 'Sangam Nose Bathing Ghats 1-5';
+            } else if (preset === 'diversion_active') {
+                sevEl.value = 'Moderate';
+                urgEl.value = 'Immediate';
+                enEl.value = 'Crowd Diversion Active towards Jhunsi Holding Area';
+                hiEl.value = 'झूंसी होल्डिंग एरिया की ओर मार्ग परिवर्तन प्रभावी';
+                areaEl.value = 'All Eastbound Approaches, Sector 3 to 8';
+            } else if (preset === 'fire_smoke') {
+                sevEl.value = 'Severe';
+                urgEl.value = 'Immediate';
+                enEl.value = 'Sector 14 Camp Hazard - Keep Emergency Lanes Clear';
+                hiEl.value = 'सेक्टर 14 शिविर में आग की चेतावनी - एम्बुलेंस मार्ग खाली रखें';
+                areaEl.value = 'Sector 14 Akharas Encampment';
+            }
+        }
+
+        function broadcastCapAlert() {
+            const headlineEn = document.getElementById('cap-headline-en').value.trim();
+            const headlineHi = document.getElementById('cap-headline-hi').value.trim();
+            if (!headlineEn && !headlineHi) {
+                showAdminToast('Please provide a headline.', 'error');
+                return;
+            }
+
+            const alertId = 'CAP-IN-UP-KUMBH-' + Date.now().toString().slice(-6);
+            const severity = document.getElementById('cap-severity').value;
+            const urgency = document.getElementById('cap-urgency').value;
+            const areaDesc = document.getElementById('cap-area-desc').value;
+
+            const capAlert = {
+                identifier: alertId,
+                sender: "UP-SDMA-ICCC-PRAYAGRAJ",
+                sent: new Date().toLocaleTimeString(),
+                status: "Actual",
+                msgType: "Alert",
+                scope: "Public",
+                info: {
+                    category: "Safety",
+                    event: headlineEn || headlineHi,
+                    urgency: urgency,
+                    severity: severity,
+                    certainty: "Observed",
+                    headline: headlineEn || headlineHi,
+                    headline_hi: headlineHi || headlineEn,
+                    areaDesc: areaDesc,
+                    instruction: "Follow on-ground sevadar & police guidelines immediately."
+                }
+            };
+
+            // Emit to socket server
+            socket.emit('CAP_ALERT_BROADCAST', capAlert);
+
+            // Broadcast on offline mesh network
+            if (typeof meshChannel !== 'undefined') {
+                meshChannel.postMessage({
+                    packetId: 'MESH-' + alertId,
+                    type: 'CAP_ALERT_BROADCAST',
+                    capAlert: capAlert,
+                    originNode: 'ICCC-MASTER',
+                    hops: 0,
+                    timestamp: Date.now()
+                });
+            }
+
+            capAlertsStore.unshift(capAlert);
+            renderCapAlerts();
+            showAdminToast(`🚨 CAP Alert Broadcasted: ${severity} — ${headlineEn || headlineHi}`, 'error');
+        }
+
+        function renderCapAlerts(alerts) {
+            if (alerts) capAlertsStore = alerts;
+            const container = document.getElementById('active-cap-list');
+            const countEl = document.getElementById('active-cap-count');
+            const badgeEl = document.getElementById('cap-active-badge');
+            if (countEl) countEl.innerText = `${capAlertsStore.length} Active`;
+            if (badgeEl) badgeEl.innerText = capAlertsStore.length;
+            if (!container) return;
+
+            if (capAlertsStore.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 text-slate-400 text-xs">
+                        <i class="fas fa-shield-check text-3xl mb-2 text-emerald-500"></i>
+                        <p>No active NDMA CAP alerts. Kumbh Mela sectors are nominal.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = capAlertsStore.map((alert, idx) => {
+                const info = alert.info || {};
+                let border = "border-amber-300 dark:border-amber-800";
+                let sevBadge = "bg-amber-100 text-amber-800";
+                if (info.severity === 'Extreme') {
+                    border = "border-rose-400 dark:border-rose-800";
+                    sevBadge = "bg-rose-100 text-rose-800 font-extrabold";
+                }
+
+                return `
+                    <div class="p-4 rounded-xl border ${border} bg-slate-50 dark:bg-slate-800/40 flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 font-bold">${alert.identifier}</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${sevBadge}">${info.severity || 'ALERT'}</span>
+                                <span class="text-[10px] text-slate-400 font-mono">${alert.sent}</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="font-extrabold text-sm text-slate-900 dark:text-white">${info.headline}</h4>
+                            ${info.headline_hi ? `<p class="text-xs text-orange-600 dark:text-orange-400 font-semibold mt-0.5">${info.headline_hi}</p>` : ''}
+                        </div>
+
+                        <div class="text-[11px] text-slate-500 flex items-center gap-1.5">
+                            <i class="fas fa-location-dot text-rose-500"></i>
+                            <span>${info.areaDesc || 'Prayagraj Sangam'}</span>
+                        </div>
+
+                        <div class="pt-2 border-t border-slate-200 dark:border-slate-700/60 flex justify-between items-center text-[10px]">
+                            <span class="text-slate-400 font-mono">ITU-T X.1303 CAP v1.2</span>
+                            <button onclick="dismissCapAlert(${idx})" class="text-rose-600 dark:text-rose-400 hover:underline font-bold">Revoke / Cancel</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function dismissCapAlert(idx) {
+            capAlertsStore.splice(idx, 1);
+            renderCapAlerts();
+        }
+
+        function downloadCapJson() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
+                standard: "ITU-T X.1303 Common Alerting Protocol v1.2",
+                authority: "Suraksha Kumbh ICCC Prayagraj",
+                activeAlerts: capAlertsStore
+            }, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `KUMBH_CAP_ALERT_${Date.now()}.json`);
+            dlAnchor.click();
+        }
+
+        // Socket listeners for CAP and CDSI
+        socket.on('CAP_ALERTS_SYNC', (alerts) => {
+            renderCapAlerts(alerts);
+        });
+
+        socket.on('CAP_ALERT_BROADCAST', (alert) => {
+            capAlertsStore.unshift(alert);
+            renderCapAlerts();
+        });
+
+        socket.on('CDSI_UPDATE', (metrics) => {
+            renderCdsiSectors(metrics);
+        });
+
+        renderCdsiSectors();
+        renderCapAlerts();
+
+        setInterval(() => {
+            const clockEl = document.getElementById('clock');
+            if (clockEl) clockEl.innerText = new Date().toLocaleTimeString();
+        }, 1000);
+
+        renderResourceCards();
+        renderRequestsQueue();
+        updateKPIs();
+    </script>
+    <script src="suraksha_guard.js"></script>
+    <script src="mesh_walkie_talkie.js"></script>
+    <script>
+        // Initialize Command Center Offline Tactical Walkie-Talkie
+        window.addEventListener('DOMContentLoaded', () => {
+            window.__surakshaMessenger = new SurakshaMeshMessenger({
+                nodeId: 'CMD-HQ-01',
+                role: 'Central Command',
+                containerId: 'mesh-chat-container'
+            });
+        });
+    </script>
+</body>
+
+</html>
